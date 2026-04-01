@@ -1,644 +1,124 @@
 <!DOCTYPE html>
-<!--
-  App Switcher Demo
-  Version: 1.1
-  Date: 2026-03-31
-  
-  Standalone demo of the Cortex app switcher with:
-  - Theme-aware icon gradients
-  - Fade-in backdrop animation
-  - ESC key to close
-  - Click outside to close
--->
+<!--App Switcher Demo v1.1 - DuitLabs-->
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>App Switcher Demo — DuitLabs Cortex</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--bg);
-      min-height: 100vh;
-      transition: background 0.3s ease;
-    }
-    
-    :root {
-      --bg: #0B1120;
-      --surface: #111827;
-      --surfaceAlt: #1A2236;
-      --border: #1E293B;
-      --text: #E2E8F0;
-      --textDim: #64748B;
-      --accent: #0EA5E9;
-      --accentDim: #0284C7;
-      --accentGlow: rgba(14,165,233,0.15);
-      --purple: #A78BFA;
-      --pink: #F472B6;
-      --amber: #F59E0B;
-      --orange: #FB923C;
-      --modalOverlay: rgba(0,0,0,0.6);
-    }
-    
-    [data-theme="teal"] {
-      --bg: #081614;
-      --surface: #0E201E;
-      --surfaceAlt: #152A28;
-      --border: #1C3634;
-      --text: #E0F2F0;
-      --textDim: #5A8C86;
-      --accent: #2DD4BF;
-      --accentDim: #14B8A6;
-      --accentGlow: rgba(45,212,191,0.15);
-    }
-    
-    [data-theme="violet"] {
-      --bg: #110D1F;
-      --surface: #18122E;
-      --surfaceAlt: #221A3E;
-      --border: #2E2450;
-      --text: #EDE9F8;
-      --textDim: #7E72A0;
-      --accent: #A78BFA;
-      --accentDim: #8B5CF6;
-      --accentGlow: rgba(167,139,250,0.15);
-      --purple: #C4B5FD;
-      --pink: #F0ABFC;
-      --amber: #FCD34D;
-      --orange: #FDBA74;
-    }
-    
-    [data-theme="emerald"] {
-      --bg: #0A1410;
-      --surface: #101E18;
-      --surfaceAlt: #182920;
-      --border: #1F3629;
-      --text: #E4F0EA;
-      --textDim: #5E8872;
-      --accent: #10B981;
-      --accentDim: #059669;
-      --accentGlow: rgba(16,185,129,0.15);
-    }
-    
-    [data-theme="rose"] {
-      --bg: #160E12;
-      --surface: #1F151A;
-      --surfaceAlt: #2A1C23;
-      --border: #3A2830;
-      --text: #F5E8EE;
-      --textDim: #947080;
-      --accent: #EC4899;
-      --accentDim: #DB2777;
-      --accentGlow: rgba(236,72,153,0.15);
-      --purple: #C084FC;
-      --pink: #F9A8D4;
-    }
-    
-    [data-theme="light"] {
-      --bg: #F1F5F9;
-      --surface: #FFFFFF;
-      --surfaceAlt: #F8FAFC;
-      --border: #E2E8F0;
-      --text: #0F172A;
-      --textDim: #64748B;
-      --accent: #0369A1;
-      --accentDim: #075985;
-      --accentGlow: rgba(3,105,161,0.1);
-      --purple: #6D28D9;
-      --pink: #BE185D;
-      --amber: #B45309;
-      --orange: #C2410C;
-      --modalOverlay: rgba(0,0,0,0.35);
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    
-    @keyframes scaleIn {
-      from { opacity: 0; transform: scale(0.95) translateY(-4px); }
-      to { opacity: 1; transform: scale(1) translateY(0); }
-    }
-    
-    .backdrop {
-      position: fixed;
-      inset: 0;
-      background: var(--modalOverlay);
-      z-index: 99;
-      display: none;
-    }
-    
-    .backdrop.visible {
-      display: block;
-      animation: fadeIn 0.2s ease forwards;
-    }
-    
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 20px;
-      height: 56px;
-      border-bottom: 1px solid var(--border);
-      background: var(--surface);
-      position: relative;
-      z-index: 20;
-    }
-    
-    header.menu-open {
-      z-index: 101;
-    }
-    
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      position: relative;
-    }
-    
-    .logo-btn {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 6px 10px;
-      margin: -6px -10px;
-      border-radius: 8px;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      transition: background 0.15s;
-      font-family: inherit;
-    }
-    
-    .logo-btn:hover, .logo-btn.active {
-      background: var(--surfaceAlt);
-    }
-    
-    .logo-text {
-      font-family: 'Outfit', sans-serif;
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--text);
-      letter-spacing: -0.02em;
-      line-height: 1.1;
-    }
-    
-    .logo-text span { color: #D4884A; }
-    
-    .app-label {
-      font-size: 11px;
-      color: var(--textDim);
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      font-weight: 600;
-    }
-    
-    .divider {
-      width: 1px;
-      height: 28px;
-      background: var(--border);
-    }
-    
-    .cpg-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--surfaceAlt);
-      color: var(--text);
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-    }
-    
-    .cpg-icon {
-      width: 22px;
-      height: 22px;
-      border-radius: 6px;
-      background: var(--accentGlow);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      font-weight: 800;
-      color: var(--accent);
-    }
-    
-    .avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: #3B5998;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 13px;
-      font-weight: 600;
-    }
-    
-    /* App Menu */
-    .app-menu {
-      position: absolute;
-      top: calc(100% + 8px);
-      left: 0;
-      min-width: 260px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
-      z-index: 100;
-      overflow: hidden;
-      display: none;
-    }
-    
-    .app-menu.visible {
-      display: block;
-      animation: scaleIn 0.2s ease forwards;
-    }
-    
-    .menu-header {
-      padding: 12px 16px 8px;
-      font-size: 11px;
-      color: var(--textDim);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    
-    .app-option {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      width: 100%;
-      padding: 10px 16px;
-      border: none;
-      cursor: pointer;
-      font-family: inherit;
-      background: transparent;
-      color: var(--text);
-      font-size: 14px;
-      text-align: left;
-      transition: background 0.1s;
-    }
-    
-    .app-option:hover {
-      background: var(--surfaceAlt);
-    }
-    
-    .app-option.active {
-      background: var(--accentGlow);
-    }
-    
-    .app-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .app-icon.cortex {
-      background: linear-gradient(135deg, var(--accent), var(--accentDim));
-    }
-    
-    .app-icon.admin {
-      background: linear-gradient(135deg, var(--purple), var(--pink));
-    }
-    
-    .app-icon.forecasting {
-      background: linear-gradient(135deg, var(--amber), var(--orange));
-    }
-    
-    .app-info { flex: 1; }
-    
-    .app-name {
-      font-weight: 500;
-      color: var(--text);
-    }
-    
-    .app-option.active .app-name {
-      font-weight: 600;
-      color: var(--accent);
-    }
-    
-    .app-desc {
-      font-size: 12px;
-      color: var(--textDim);
-    }
-    
-    .app-check {
-      font-size: 14px;
-      color: var(--accent);
-    }
-    
-    .menu-footer {
-      border-top: 1px solid var(--border);
-      margin-top: 8px;
-      padding: 10px 16px;
-      font-size: 12px;
-      color: var(--textDim);
-    }
-    
-    .menu-footer span {
-      color: var(--text);
-    }
-    
-    /* Dashboard */
-    .dashboard {
-      padding: 24px;
-      min-height: calc(100vh - 56px);
-    }
-    
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-    
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px;
-    }
-    
-    .card-label {
-      font-size: 12px;
-      color: var(--textDim);
-      margin-bottom: 8px;
-    }
-    
-    .card-value {
-      font-size: 28px;
-      font-weight: 600;
-      color: var(--text);
-    }
-    
-    .chart-placeholder {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      height: 300px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--textDim);
-    }
-    
-    /* Controls */
-    .controls {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      z-index: 50;
-    }
-    
-    .controls label {
-      font-size: 12px;
-      color: var(--textDim);
-      margin-bottom: 4px;
-      display: block;
-    }
-    
-    .controls select {
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--surfaceAlt);
-      color: var(--text);
-      font-family: inherit;
-      font-size: 14px;
-      cursor: pointer;
-    }
-    
-    .hint {
-      font-size: 11px;
-      color: var(--textDim);
-      margin-top: 8px;
-      padding-top: 8px;
-      border-top: 1px solid var(--border);
-    }
-  </style>
-</head>
-<body>
-  <div id="backdrop" class="backdrop"></div>
-  
-  <header id="header">
-    <div class="header-left">
-      <button class="logo-btn" id="logo-btn">
-        <svg width="32" height="32" viewBox="0 0 80 80" fill="none">
-          <defs>
-            <linearGradient id="dlMark" x1="4" y1="4" x2="76" y2="76">
-              <stop stop-color="#E8A060"/>
-              <stop offset="1" stop-color="#A85828"/>
-            </linearGradient>
-          </defs>
-          <circle cx="40" cy="40" r="38" fill="url(#dlMark)"/>
-          <line x1="22" y1="12" x2="22" y2="68" stroke="var(--bg)" stroke-width="5.5" stroke-linecap="round"/>
-          <path d="M30 12 C58 12 66 24 66 40 C66 56 58 68 30 68" fill="none" stroke="var(--bg)" stroke-width="3" stroke-linecap="round"/>
-        </svg>
-        <div>
-          <div class="logo-text">Duit<span>Labs</span></div>
-          <div class="app-label" id="current-app-label">Cortex</div>
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>App Switcher Demo - DuitLabs Cortex</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+          *{margin:0;padding:0;box-sizing:border-box}
+          body{font-family:'Inter',sans-serif;background:var(--bg);min-height:100vh;transition:background 0.3s ease}
+          :root{--bg:#0B1120;--surface:#111827;--surfaceAlt:#1A2236;--border:#1E293B;--text:#E2E8F0;--textDim:#64748B;--accent:#0EA5E9;--accentDim:#0284C7;--accentGlow:rgba(14,165,233,0.15);--purple:#A78BFA;--pink:#F472B6;--amber:#F59E0B;--orange:#FB923C;--modalOverlay:rgba(0,0,0,0.6)}
+          [data-theme="teal"]{--bg:#081614;--surface:#0E201E;--surfaceAlt:#152A28;--border:#1C3634;--text:#E0F2F0;--textDim:#5A8C86;--accent:#2DD4BF;--accentDim:#14B8A6;--accentGlow:rgba(45,212,191,0.15)}
+          [data-theme="violet"]{--bg:#110D1F;--surface:#18122E;--surfaceAlt:#221A3E;--border:#2E2450;--text:#EDE9F8;--textDim:#7E72A0;--accent:#A78BFA;--accentDim:#8B5CF6;--accentGlow:rgba(167,139,250,0.15);--purple:#C4B5FD;--pink:#F0ABFC;--amber:#FCD34D;--orange:#FDBA74}
+          [data-theme="emerald"]{--bg:#0A1410;--surface:#101E18;--surfaceAlt:#182920;--border:#1F3629;--text:#E4F0EA;--textDim:#5E8872;--accent:#10B981;--accentDim:#059669;--accentGlow:rgba(16,185,129,0.15)}
+          [data-theme="rose"]{--bg:#160E12;--surface:#1F151A;--surfaceAlt:#2A1C23;--border:#3A2830;--text:#F5E8EE;--textDim:#947080;--accent:#EC4899;--accentDim:#DB2777;--accentGlow:rgba(236,72,153,0.15);--purple:#C084FC;--pink:#F9A8D4}
+          [data-theme="light"]{--bg:#F1F5F9;--surface:#FFFFFF;--surfaceAlt:#F8FAFC;--border:#E2E8F0;--text:#0F172A;--textDim:#64748B;--accent:#0369A1;--accentDim:#075985;--accentGlow:rgba(3,105,161,0.1);--purple:#6D28D9;--pink:#BE185D;--amber:#B45309;--orange:#C2410C;--modalOverlay:rgba(0,0,0,0.35)}
+          @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+          @keyframes scaleIn{from{opacity:0;transform:scale(0.95) translateY(-4px)}to{opacity:1;transform:scale(1) translateY(0)}}
+          #gate{position:fixed;inset:0;background:#0B1120;display:flex;align-items:center;justify-content:center;z-index:9999}
+          .gate-box{background:#111827;border:1px solid #1E293B;border-radius:16px;padding:36px 32px;width:340px;text-align:center}
+          .gate-box h2{font-size:20px;font-weight:700;color:#E2E8F0;margin-bottom:6px}
+          .gate-box p{font-size:13px;color:#64748B;margin-bottom:20px}
+          .gate-box input{width:100%;padding:10px 14px;border-radius:8px;border:1px solid #0EA5E9;background:transparent;color:#E2E8F0;font-size:15px;font-family:inherit;outline:none;margin-bottom:12px;text-align:center}
+          .gate-box button{width:100%;padding:11px;border-radius:8px;border:none;background:#e07f1c;color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer}
+          .gate-box button:hover{background:#c96f18}
+          .gate-error{font-size:12px;color:#f87171;margin-top:8px;min-height:16px}
+          .backdrop{position:fixed;inset:0;background:var(--modalOverlay);z-index:99;display:none}
+          .backdrop.visible{display:block;animation:fadeIn 0.2s ease forwards}
+          header{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:56px;border-bottom:1px solid var(--border);background:var(--surface);position:relative;z-index:20}
+          header.menu-open{z-index:101}
+          .header-left{display:flex;align-items:center;gap:16px;position:relative}
+          .logo-btn{display:flex;align-items:center;gap:10px;padding:6px 10px;margin:-6px -10px;border-radius:8px;border:none;background:transparent;cursor:pointer;transition:background 0.15s;font-family:inherit}
+          .logo-btn:hover,.logo-btn.active{background:var(--surfaceAlt)}
+          .logo-text{font-family:'Outfit',sans-serif;font-size:18px;font-weight:700;color:var(--text);letter-spacing:-0.02em;line-height:1.1}
+          .logo-text span{color:#D4884A}
+          .app-label{font-size:11px;color:var(--textDim);letter-spacing:1.5px;text-transform:uppercase;font-weight:600}
+          .divider{width:1px;height:28px;background:var(--border)}
+          .cpg-btn{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surfaceAlt);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+          .cpg-icon{width:22px;height:22px;border-radius:6px;background:var(--accentGlow);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--accent)}
+          .avatar{width:32px;height:32px;border-radius:50%;background:#3B5998;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:600}
+          .app-menu{position:absolute;top:calc(100% + 8px);left:0;min-width:260px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.4);z-index:100;overflow:hidden;display:none}
+          .app-menu.visible{display:block;animation:scaleIn 0.2s ease forwards}
+          .menu-header{padding:12px 16px 8px;font-size:11px;color:var(--textDim);text-transform:uppercase;letter-spacing:1px}
+          .app-option{display:flex;align-items:center;gap:12px;width:100%;padding:10px 16px;border:none;cursor:pointer;font-family:inherit;background:transparent;color:var(--text);font-size:14px;text-align:left;transition:background 0.1s}
+          .app-option:hover{background:var(--surfaceAlt)}
+          .app-option.active{background:var(--accentGlow)}
+          .app-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+          .app-icon.cortex{background:linear-gradient(135deg,var(--accent),var(--accentDim))}
+          .app-icon.admin{background:linear-gradient(135deg,var(--purple),var(--pink))}
+          .app-icon.forecasting{background:linear-gradient(135deg,var(--amber),var(--orange))}
+          .app-info{flex:1}
+          .app-name{font-weight:500;color:var(--text)}
+          .app-option.active .app-name{font-weight:600;color:var(--accent)}
+          .app-desc{font-size:12px;color:var(--textDim)}
+          .app-check{font-size:14px;color:var(--accent)}
+          .menu-footer{border-top:1px solid var(--border);margin-top:8px;padding:10px 16px;font-size:12px;color:var(--textDim)}
+          .menu-footer span{color:var(--text)}
+          .dashboard{padding:24px;min-height:calc(100vh - 56px)}
+          .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+          .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px}
+          .card-label{font-size:12px;color:var(--textDim);margin-bottom:8px}
+          .card-value{font-size:28px;font-weight:600;color:var(--text)}
+          .chart-placeholder{background:var(--surface);border:1px solid var(--border);border-radius:12px;height:300px;display:flex;align-items:center;justify-content:center;color:var(--textDim)}
+          .controls{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;z-index:50}
+          .controls label{font-size:12px;color:var(--textDim);margin-bottom:4px;display:block}
+          .controls select{padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surfaceAlt);color:var(--text);font-family:inherit;font-size:14px;cursor:pointer}
+          .hint{font-size:11px;color:var(--textDim);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+        </style>
+  </head>
+  <body>
+      <div id="gate"><div class="gate-box"><h2>Cortex Demo</h2><p>Enter password to continue</p><input type="password" id="gate-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPass()" autofocus/><button onclick="checkPass()">Enter</button>button><div class="gate-error" id="gate-error"></div>div></div>div></div>div>
+    <div id="backdrop" class="backdrop"></div>div>
+    <header id="header">
+        <div class="header-left">
+              <button class="logo-btn" id="logo-btn">
+                      <svg width="32" height="32" viewBox="0 0 80 80" fill="none"><defs><linearGradient id="dlMark" x1="4" y1="4" x2="76" y2="76"><stop stop-color="#E8A060"/><stop offset="1" stop-color="#A85828"/></linearGradient>linearGradient></defs><circle cx="40" cy="40" r="38" fill="url(#dlMark)"/><line x1="22" y1="12" x2="22" y2="68" stroke="var(--bg)" stroke-width="5.5" stroke-linecap="round"/><path d="M30 12 C58 12 66 24 66 40 C66 56 58 68 30 68" fill="none" stroke="var(--bg)" stroke-width="3" stroke-linecap="round"/></svg>svg>
+                      <div><div class="logo-text">Duit<span>Labs</span></div><div class="app-label" id="current-app-label">Cortex</div></div>
+              </button>button>
+              <div id="app-menu" class="app-menu">
+                      <div class="menu-header">Switch app</div>
+                      <button class="app-option active" data-app="cortex"><div class="app-icon cortex"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M18 9l-5 5-4-4-3 3"/></svg>svg></div><div class="app-info"><div class="app-name">Cortex</div><div class="app-desc">Analytics dashboard</div></div><span class="app-check">&#x2713;</span></button>button>
+                      <button class="app-option" data-app="admin"><div class="app-icon admin"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>svg></div><div class="app-info"><div class="app-name">Cortex Admin</div><div class="app-desc">Configuration and ops</div></div><span class="app-check" style="visibility:hidden">&#x2713;</span></button>button>
+                      <button class="app-option" data-app="forecasting"><div class="app-icon forecasting"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>svg></div><div class="app-info"><div class="app-name">Forecasting</div><div class="app-desc">Demand planning</div></div><span class="app-check" style="visibility:hidden">&#x2713;</span></button>button>
+                      <div class="menu-footer">Signed in as <span>admin@duitlabs.com</span></div>
+              </div>
+              <div class="divider"></div>
+              <button class="cpg-btn"><div class="cpg-icon">AC</div><span>Acme Foods Co.</span></button>button>
         </div>
-      </button>
-      
-      <!-- App Menu (inside header-left for proper positioning) -->
-      <div id="app-menu" class="app-menu">
-        <div class="menu-header">Switch app</div>
-        
-        <button class="app-option active" data-app="cortex">
-          <div class="app-icon cortex">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
-              <path d="M3 3v18h18"/><path d="M18 9l-5 5-4-4-3 3"/>
-            </svg>
-          </div>
-          <div class="app-info">
-            <div class="app-name">Cortex</div>
-            <div class="app-desc">Analytics dashboard</div>
-          </div>
-          <span class="app-check">✓</span>
-        </button>
-        
-        <button class="app-option" data-app="admin">
-          <div class="app-icon admin">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-            </svg>
-          </div>
-          <div class="app-info">
-            <div class="app-name">Cortex Admin</div>
-            <div class="app-desc">Configuration & ops</div>
-          </div>
-          <span class="app-check" style="visibility: hidden;">✓</span>
-        </button>
-        
-        <button class="app-option" data-app="forecasting">
-          <div class="app-icon forecasting">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
-              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-            </svg>
-          </div>
-          <div class="app-info">
-            <div class="app-name">Forecasting</div>
-            <div class="app-desc">Demand planning</div>
-          </div>
-          <span class="app-check" style="visibility: hidden;">✓</span>
-        </button>
-        
-        <div class="menu-footer">
-          Signed in as <span>admin@duitlabs.com</span>
+        <div class="avatar">JD</div>
+    </header>header>
+    <main class="dashboard">
+        <div class="cards">
+              <div class="card"><div class="card-label">Total Revenue</div><div class="card-value">$2.4M</div></div>
+              <div class="card"><div class="card-label">Units Sold</div><div class="card-value">142K</div></div>
+              <div class="card"><div class="card-label">Active SKUs</div><div class="card-value">847</div></div>
+              <div class="card"><div class="card-label">In-Stock Rate</div><div class="card-value">94.2%</div></div>
         </div>
-      </div>
-      
-      <div class="divider"></div>
-      
-      <button class="cpg-btn">
-        <div class="cpg-icon">AC</div>
-        <span>Acme Foods Co.</span>
-        <span style="font-size: 12px; color: var(--textDim);">▼</span>
-      </button>
+        <div class="chart-placeholder">Chart area - click the DuitLabs logo to open the app switcher</div>
+    </main>main>
+    <div class="controls">
+        <div><label>Theme</label><select id="theme-select"><option value="dark">Sky Blue (Dark)</option>option><option value="teal">Midnight Teal</option>option><option value="violet">Electric Violet</option>option><option value="emerald">Emerald and Gold</option>option><option value="rose">Warm Rose</option>option><option value="light">Light</option>option></select>select></div>
+        <div class="hint">Press ESC or click outside to close</div>
     </div>
-    
-    <div class="avatar">JD</div>
-  </header>
-  
-  <main class="dashboard">
-    <div class="cards">
-      <div class="card">
-        <div class="card-label">Total Revenue</div>
-        <div class="card-value">$2.4M</div>
-      </div>
-      <div class="card">
-        <div class="card-label">Units Sold</div>
-        <div class="card-value">142K</div>
-      </div>
-      <div class="card">
-        <div class="card-label">Active SKUs</div>
-        <div class="card-value">847</div>
-      </div>
-      <div class="card">
-        <div class="card-label">In-Stock Rate</div>
-        <div class="card-value">94.2%</div>
-      </div>
-    </div>
-    
-    <div class="chart-placeholder">
-      Chart area — click the DuitLabs logo to see the app switcher
-    </div>
-  </main>
-  
-  <div class="controls">
-    <div>
-      <label>Theme</label>
-      <select id="theme-select">
-        <option value="dark">Sky Blue (Dark)</option>
-        <option value="teal">Midnight Teal</option>
-        <option value="violet">Electric Violet</option>
-        <option value="emerald">Emerald & Gold</option>
-        <option value="rose">Warm Rose</option>
-        <option value="light">Light</option>
-      </select>
-    </div>
-    <div class="hint">
-      Press <strong>ESC</strong> or click outside to close
-    </div>
-  </div>
-  
-  <script>
-    const logoBtn = document.getElementById('logo-btn');
-    const header = document.getElementById('header');
-    const backdrop = document.getElementById('backdrop');
-    const appMenu = document.getElementById('app-menu');
-    const themeSelect = document.getElementById('theme-select');
-    const currentAppLabel = document.getElementById('current-app-label');
-    const appOptions = document.querySelectorAll('.app-option');
-    
-    let isOpen = false;
-    let currentApp = 'cortex';
-    
-    const appNames = {
-      cortex: 'Cortex',
-      admin: 'Cortex Admin',
-      forecasting: 'Forecasting'
-    };
-    
-    function openMenu() {
-      isOpen = true;
-      header.classList.add('menu-open');
-      logoBtn.classList.add('active');
-      backdrop.classList.add('visible');
-      appMenu.classList.add('visible');
-    }
-    
-    function closeMenu() {
-      isOpen = false;
-      header.classList.remove('menu-open');
-      logoBtn.classList.remove('active');
-      backdrop.classList.remove('visible');
-      appMenu.classList.remove('visible');
-    }
-    
-    function selectApp(appId) {
-      currentApp = appId;
-      currentAppLabel.textContent = appNames[appId];
-      
-      appOptions.forEach(opt => {
-        const isActive = opt.dataset.app === appId;
-        opt.classList.toggle('active', isActive);
-        opt.querySelector('.app-check').style.visibility = isActive ? 'visible' : 'hidden';
-      });
-      
-      closeMenu();
-    }
-    
-    // Logo click
-    logoBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (isOpen) closeMenu();
-      else openMenu();
-    });
-    
-    // Backdrop click
-    backdrop.addEventListener('click', closeMenu);
-    
-    // Prevent menu clicks from closing
-    appMenu.addEventListener('click', (e) => e.stopPropagation());
-    
-    // App option clicks
-    appOptions.forEach(opt => {
-      opt.addEventListener('click', () => selectApp(opt.dataset.app));
-    });
-    
-    // ESC key
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && isOpen) closeMenu();
-    });
-    
-    // Theme switcher
-    themeSelect.addEventListener('change', (e) => {
-      if (e.target.value === 'dark') {
-        document.body.removeAttribute('data-theme');
-      } else {
-        document.body.setAttribute('data-theme', e.target.value);
-      }
-    });
-  </script>
-</body>
-</html>
+    <script>
+          function checkPass(){var v=document.getElementById('gate-input').value;if(v==='duitlabs'){document.getElementById('gate').style.display='none';}else{document.getElementById('gate-error').textContent='Incorrect password';document.getElementById('gate-input').value='';}}
+          var lb=document.getElementById('logo-btn'),hd=document.getElementById('header'),bd=document.getElementById('backdrop'),am=document.getElementById('app-menu'),ts=document.getElementById('theme-select'),al=document.getElementById('current-app-label'),ao=document.querySelectorAll('.app-option'),open=false;
+          var names={cortex:'Cortex',admin:'Cortex Admin',forecasting:'Forecasting'};
+          function openMenu(){open=true;hd.classList.add('menu-open');lb.classList.add('active');bd.classList.add('visible');am.classList.add('visible');}
+          function closeMenu(){open=false;hd.classList.remove('menu-open');lb.classList.remove('active');bd.classList.remove('visible');am.classList.remove('visible');}
+          function selApp(id){al.textContent=names[id];ao.forEach(function(o){var a=o.dataset.app===id;o.classList.toggle('active',a);o.querySelector('.app-check').style.visibility=a?'visible':'hidden';});closeMenu();}
+          lb.addEventListener('click',function(e){e.stopPropagation();open?closeMenu():openMenu();});
+          bd.addEventListener('click',closeMenu);
+          am.addEventListener('click',function(e){e.stopPropagation();});
+          ao.forEach(function(o){o.addEventListener('click',function(){selApp(o.dataset.app);});});
+          document.addEventListener('keydown',function(e){if(e.key==='Escape'&&open)closeMenu();});
+          ts.addEventListener('change',function(e){e.target.value==='dark'?document.body.removeAttribute('data-theme'):document.body.setAttribute('data-theme',e.target.value);});
+    </script>
+  </body>
+</html>html>
+    </script></label></span></span></div></defs></p></h2>
+  </body>
+    </style></title>
+  </head>
