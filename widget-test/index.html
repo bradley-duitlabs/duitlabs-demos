@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Widget Test Demo</title>
+  <style>
+    body { font-family: sans-serif; background: #0F1520; color: #E8EDF4; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+    .card { background: #16202E; border: 1px solid #243044; border-radius: 12px; padding: 40px; text-align: center; }
+    h1 { color: #e07f1c; }
+    p { color: #4A6280; }
+  </style>
+<style>
+#pw-gate{position:fixed;inset:0;background:var(--bg-page, #0F1520);z-index:9999;display:flex;align-items:center;justify-content:center;}
+#pw-gate.hidden{display:none;}
+#pw-box{background:var(--bg-surface, #16202E);border:1px solid var(--border, #243044);border-radius:12px;padding:32px 40px;text-align:center;max-width:360px;width:90%;}
+#pw-box h2{margin:0 0 8px;font-size:18px;color:var(--text-primary, #E8EDF4);font-weight:700;}
+#pw-box p{margin:0 0 20px;font-size:13px;color:var(--text-dim, #4A6280);}
+#pw-input{width:100%;padding:10px 14px;font-size:14px;border:1px solid var(--border, #243044);border-radius:8px;background:var(--bg-page, #0F1520);color:var(--text-primary, #E8EDF4);outline:none;box-sizing:border-box;}
+#pw-input:focus{border-color:var(--accent, #e07f1c);}
+#pw-input::placeholder{color:var(--text-dim, #4A6280);}
+#pw-btn{margin-top:14px;width:100%;padding:10px;font-size:14px;font-weight:600;background:var(--accent, #e07f1c);color:#fff;border:none;border-radius:8px;cursor:pointer;transition:background .15s;}
+#pw-btn:hover{background:var(--accent-dark, #c96e18);}
+#pw-error{margin-top:12px;font-size:12px;color:var(--red, #EF4444);display:none;}
+#app-content{display:none;}
+#app-content.visible{display:block;}
+</style>
+</head>
+<body>
+<!-- Password Gate -->
+<div id="pw-gate">
+  <div id="pw-box">
+    <h2>Widget Test Demo</h2>
+    <p>Enter password to continue</p>
+    <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()">
+    <button id="pw-btn" onclick="checkPw()">Enter</button>
+    <div id="pw-error">Incorrect password</div>
+  </div>
+</div>
+<div id="app-content">
+  <div class="card">
+    <h1>Widget Test Demo</h1>
+    <p>This is a placeholder demo used to test the demo-publisher skill.</p>
+    <p>If you can see this, the password gate worked! 🎉</p>
+  </div>
+</div><!-- end app-content -->
+<script>
+(function(){
+  var PW='duitlabs';
+  if(sessionStorage.getItem('demo_auth')==='1'){
+    document.getElementById('pw-gate').classList.add('hidden');
+    document.getElementById('app-content').classList.add('visible');
+  }
+  window.checkPw=function(){
+    var input=document.getElementById('pw-input');
+    if(input.value===PW){
+      sessionStorage.setItem('demo_auth','1');
+      document.getElementById('pw-gate').classList.add('hidden');
+      document.getElementById('app-content').classList.add('visible');
+    }else{
+      document.getElementById('pw-error').style.display='block';
+      input.value='';
+      input.focus();
+    }
+  };
+  document.getElementById('pw-input').focus();
+})();
+</script>
+</body>
+</html>
