@@ -616,14 +616,14 @@ root.render(React.createElement(App));
 <script>
 (function(){
   var PW='duitlabs';
-  if(sessionStorage.getItem('demo_auth')==='1'){
+  if(sessionStorage.getItem('demo_auth_cortex')==='1'){
     document.getElementById('pw-gate').classList.add('hidden');
     document.getElementById('app-content').classList.add('visible');
   }
   window.checkPw=function(){
     var input=document.getElementById('pw-input');
     if(input.value===PW){
-      sessionStorage.setItem('demo_auth','1');
+      sessionStorage.setItem('demo_auth_cortex','1');
       document.getElementById('pw-gate').classList.add('hidden');
       document.getElementById('app-content').classList.add('visible');
     }else{

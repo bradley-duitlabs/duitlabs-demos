@@ -639,13 +639,13 @@ const searchSuggestions=searchQuery.length>0?[...itemDetail.filter(it=>it.item.t
 <script>
 (function(){
   var PW='duitlabs';
-  if(sessionStorage.getItem('demo_auth')==='1'){
+  if(sessionStorage.getItem('demo_auth_cortex-ai')==='1'){
     document.getElementById('pw-gate').classList.add('hidden');
     document.getElementById('app-content').classList.add('visible');
   }
   window.checkPw=function(){
     var v=document.getElementById('pw-input').value;
-    if(v===PW){sessionStorage.setItem('demo_auth','1');document.getElementById('pw-gate').classList.add('hidden');document.getElementById('app-content').classList.add('visible');}
+    if(v===PW){sessionStorage.setItem('demo_auth_cortex-ai','1');document.getElementById('pw-gate').classList.add('hidden');document.getElementById('app-content').classList.add('visible');}
     else{document.getElementById('pw-error').style.display='block';document.getElementById('pw-input').value='';}
   };
   document.getElementById('pw-input').focus();
