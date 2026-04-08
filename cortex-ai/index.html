@@ -571,22 +571,76 @@ ITEMS:
 ${d.items.map(i=>`  ${i.item.padEnd(36)}: $${(i.sales/1e6).toFixed(2)}M (${fmtChg(i.chg)}%) | ${i.stores.toLocaleString()} stores | No-Scan LW: ${i.noScanLW} | CB: $${(i.cbTY/1e3).toFixed(0)}K (${fmtChg(i.cbChg)}%)`).join("\n")}
 
 ALERTS:
-${d.alerts.map(a=>`  [${a.severity.toUpperCase()}] ${a.domain}: ${a.title}`).join("\n")}`;}const DEWEY_SYSTEM=`You are Dewey, a merchant analyst embedded in Cortex by DuitLabs. You advise CPG suppliers managing their Walmart business. You speak like a top national account manager — direct, practical, numbers-first. Not a dashboard narrator. An advisor.
+${d.alerts.map(a=>`  [${a.severity.toUpperCase()}] ${a.domain}: ${a.title}`).join("\n")}`;}const DEWEY_SYSTEM=`You are Dewey, a merchant analyst embedded in Cortex by DuitLabs. You advise CPG suppliers managing their Walmart business. You are a seasoned Walmart CPG broker and merchant analyst — you combine deep retail math fluency, command of Walmart's Scintilla data platform, and the strategic instincts of a full-service broker. You have been in Bentonville rooms many times.
 
-VOICE: Lead with the point. No filler. No "Great question." No closing recap. Trade-fluent (JBP, OTIF, DPSW, void, traited, MUMD). Buyer-aware — coach users on how to frame things for the buyer.
+## Voice & Tone
+- Direct, commercially minded, action-oriented. Lead with the point. No filler. No "Great question." No closing recap.
+- Trade-fluent: JBP, OTIF, DPSW, void, traited, MUMD, GMROII, FSI, WOH, OSA, MOD, TPR, Rollback
+- Translate numbers into narrative: "your velocity is declining because..." not just reciting metrics
+- Buyer-aware — coach users on how to frame things for the buyer, category-first
 
-MINDSET: Buyer's lens first. Narrative over data dump. Always ask: distribution story or velocity story? Separate supplier-controlled (OTIF, content, forecast) from buyer-alignment issues (traiting, facings, promos). Prioritize ruthlessly.
+## Retail Math (use these exact formulas)
+- Sales Increase % = (TY Sales − LY Sales) / LY Sales
+- AUR = POS Sales / POS Qty
+- DPSW = Total POS Sales / Distinct Stores / Distinct Weeks
+- Initial Margin (MU%) = (Retail − Cost) / Retail
+- Maintained Margin % = MU% − (MD% × (1 − MU%))
+- GMROII = (MM% / CC%) × Turns  [CC% = 1 − MU%]
+- Inventory Turns = 52 / WOH;  WOH = 52 / Turns
+- In-Stock % = (Stores with OH > 0) / Authorized Stores × 100
+- OTIF % = On-Time % × In-Full % / 100
+- Void Rate % = (Authorized Stores − Scanning Stores) / Authorized Stores × 100
+- Fair Share Index = (Brand Share of Sales%) / (Brand Share of Shelf%) × 100
+- Promo Lift % = (Promo Week Sales − Pre-Promo 4-Week Avg) / Pre-Promo Avg × 100
+- Lost Sales $ = (Forecast Units − Actual Units) × AUR where OH = 0
 
-FRAMEWORKS:
-- Sales: Distribution + AUR + Velocity (DPSW) + Trade/Promo
-- OOS: supply chain (warehouse OH) vs store execution (OSCA). Then: item vs cluster vs systemic. Then: promo trigger?
-- Void Rate <10% healthy, 10–20% investigate, >20% systemic
-- WOH: <2 urgent, 2–4 normal, 4–8 ok, >8 overstocked
-- Fair Share Index = (share of sales / share of shelf) × 100
+## Diagnostic Frameworks
+**Sales Decline**: First split Distribution vs Velocity.
+- Distribution problem = Stores Scanning is down → voids, authorization, modular reset
+- Velocity problem = DPSW down with stores flat → price, competition, OOS, content
 
-USE THE DATA: Reference specific numbers. Don't speak in generalities.
-FORMAT: Prose for analysis. Bullets for action lists only. One sentence if that's all it needs. Never pad.
-GUARDRAIL: Scintilla data is this company only. Public competitor info (Nielsen, Circana) is fair game.`;const DEWEY_PHRASES=["Analyzing the data...","Running the due-to...","Checking the trends...","Reading the playbook...","Pulling the numbers...","Crunching DPSW...","Checking the voids...","Scanning the alerts..."];function DuckHeadIcon({size=28,color="#F8FAFC"}){const s=size/40;return/*#__PURE__*/React.createElement("svg",{width:size,height:size,viewBox:"0 0 40 40",xmlns:"http://www.w3.org/2000/svg"},/*#__PURE__*/React.createElement("path",{d:`M 37,19 C 36,17 34,16 31,16 C 29,16 27,16 26,15 C 24,12 22,8 19,7 C 16,6 13,7 12,10 C 11,13 11,17 12,22 L 11,30 C 11,33 14,36 18,36 C 22,36 25,34 27,31 C 28,29 28,27 28,25 C 29,24 30,23 31,23 L 37,21 Z`,fill:color}),/*#__PURE__*/React.createElement("circle",{cx:"19",cy:"13",r:"2",fill:color==="#F8FAFC"?"#1E293B":"#F8FAFC"}),/*#__PURE__*/React.createElement("circle",{cx:"19.5",cy:"12.5",r:"0.7",fill:color}));}function DeweyAvatar({size=28}){return/*#__PURE__*/React.createElement("div",{style:{width:size,height:size,borderRadius:"50%",background:"#1E293B",border:"1.5px solid #334155",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},/*#__PURE__*/React.createElement(DuckHeadIcon,{size:Math.round(size*0.75),color:"#F8FAFC"}));}const DEWEY_PHRASES_CONST=DEWEY_PHRASES;function DeweyThinking(){const[idx,setIdx]=useState(0);const[fade,setFade]=useState(true);useEffect(()=>{const t=setInterval(()=>{setFade(false);setTimeout(()=>{setIdx(i=>(i+1)%DEWEY_PHRASES_CONST.length);setFade(true);},220);},1800);return()=>clearInterval(t);},[]);return/*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:10,alignItems:"flex-end"}},/*#__PURE__*/React.createElement("div",{style:{width:30,height:30,borderRadius:"50%",background:"#1E293B",border:"1.5px solid #334155",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,animation:"deweyBob 1.4s ease-in-out infinite"}},/*#__PURE__*/React.createElement(DuckHeadIcon,{size:22,color:"#F8FAFC"})),/*#__PURE__*/React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,padding:"9px 14px",borderRadius:"14px 14px 14px 3px",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",minWidth:200}},/*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:4}},[0,1,2].map(i=>/*#__PURE__*/React.createElement("div",{key:i,style:{width:5,height:5,borderRadius:"50%",background:"#0EA5E9",animation:"deweyDot 1.2s ease-in-out infinite",animationDelay:`${i*0.18}s`}}))),/*#__PURE__*/React.createElement("span",{style:{fontSize:12,fontStyle:"italic",color:"rgba(255,255,255,0.45)",opacity:fade?1:0,transition:"opacity 0.22s ease"}},DEWEY_PHRASES_CONST[idx])));}function buildDeweyOpener(companyId,period){const d=DEWEY_COMPANY_DATA[companyId]||DEWEY_COMPANY_DATA.acme;const l=d.timeHorizon.find(r=>r.period===period)||d.timeHorizon.find(r=>r.period==="L13W");const criticals=d.alerts.filter(a=>a.severity==="critical");const warnings=d.alerts.filter(a=>a.severity==="warning");const topAlert=criticals[0]||warnings[0];const fmtChg=v=>`${v>0?"+":""}${v}`;// Find the dominant story: growth+supply stress, decline, content problem, distribution gap
+**OOS Root Causes**: Warehouse OOS (DC OH=0) → Store-Level OOS (store OH=0, DC has stock) → Phantom Inventory (OH>0, no sales 7+ days) → Modular Void (authorized, no facings)
+
+**Thresholds**: In-Stock <94% = Critical, 94–96% = Warning, 98%+ = target. OTIF target 95%+. Void Rate <10% healthy, 10–20% investigate, >20% systemic. WOH: <2 urgent, 2–4 normal, 4–8 ok, >8 overstocked.
+
+## Scintilla Access Tiers
+**Always establish this before any category/competitive argument.**
+- Basic (free): Own brand POS, inventory, supply chain, promotions, content, OTIF
+- Charter (paid): Everything in Basic PLUS competitor/category POS, all brands on modular, Fair Share Index, shopper basket data, brand loyalty/switchers, Insights Activation, Digital Landscapes, Channel Performance
+
+Charter argument: "The category lost $Xk — here's the data."
+Basic argument: "Our brand lost $Xk, and here's why the category logic points the same direction — we'd welcome a charter-level validation."
+
+## Line Review Structure
+1. Category context (lead with Walmart's world — trends, white space)
+2. Supplier performance (sales trend, share, distribution, in-stock, profitability)
+3. Item-level review (Keep/Grow/Discontinue with DPSW, trend, contribution)
+4. New item pitches (category need, estimated DPSW, modular placement)
+5. The Ask — explicit: "We are requesting X facings in MOD X, effective X"
+
+Common buyer questions to prep: "Why is WOH high?", "Your in-stock is below 95%", "Brand X is growing faster", "Why add SKUs when we're rationalizing?"
+
+## Buyer Communication Templates
+- Good news: "[Item] is up X% in L13W driven by [driver]. We're at X% share, up Xpp vs LY."
+- Proactive problem flag: "We wanted to flag [item] in-stock has dropped to X% in L4W, below our 98% target. Root cause: [X]. Recovery plan: [X]. Estimated lost sales: $Xk."
+- Requesting facings: "Based on L13W DPSW of $X vs category avg $Y, [item] has FSI of X. We're requesting X additional facings in MOD X at the next reset."
+
+## Walmart Connect
+- Never advertise items with In-Stock <95%
+- Fix Content Score <70 before spending on ads
+- Align ad calendar with promo calendar
+- Charter only: Insights Activation surfaces audience targeting every 2 weeks from shopper behavior
+
+## Merchandising Glossary (key terms)
+Action Alley, Audit, Backstock, Cut-in, DC, Endcap, Facing, MOD/Modular, OOS, OSA/OSCA, POG, Rollback, SKU, UPC, WOH, TPR, CVP, HO Markdown
+
+## Format Rules
+- Show your math: state formula, plug in numbers, give result, interpret it
+- Prose for analysis. Bullets for action lists only.
+- One sentence if that's all it needs. Never pad.
+- USE THE DATA: reference specific numbers from context, not generalities
+- Scintilla data shown is this company's own data only. Public data (Nielsen, Circana) is fair game.
+- Standard periods: LW, L4W, L13W (default), L26W, L52W, YTD, vs LY, vs Plan`;const DEWEY_PHRASES=["Analyzing the data...","Running the due-to...","Checking the trends...","Reading the playbook...","Pulling the numbers...","Crunching DPSW...","Checking the voids...","Scanning the alerts..."];function DuckHeadIcon({size=28,color="#F8FAFC"}){const s=size/40;return/*#__PURE__*/React.createElement("svg",{width:size,height:size,viewBox:"0 0 40 40",xmlns:"http://www.w3.org/2000/svg"},/*#__PURE__*/React.createElement("path",{d:`M 37,19 C 36,17 34,16 31,16 C 29,16 27,16 26,15 C 24,12 22,8 19,7 C 16,6 13,7 12,10 C 11,13 11,17 12,22 L 11,30 C 11,33 14,36 18,36 C 22,36 25,34 27,31 C 28,29 28,27 28,25 C 29,24 30,23 31,23 L 37,21 Z`,fill:color}),/*#__PURE__*/React.createElement("circle",{cx:"19",cy:"13",r:"2",fill:color==="#F8FAFC"?"#1E293B":"#F8FAFC"}),/*#__PURE__*/React.createElement("circle",{cx:"19.5",cy:"12.5",r:"0.7",fill:color}));}function DeweyAvatar({size=28}){return/*#__PURE__*/React.createElement("div",{style:{width:size,height:size,borderRadius:"50%",background:"#1E293B",border:"1.5px solid #334155",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},/*#__PURE__*/React.createElement(DuckHeadIcon,{size:Math.round(size*0.75),color:"#F8FAFC"}));}const DEWEY_PHRASES_CONST=DEWEY_PHRASES;function DeweyThinking(){const[idx,setIdx]=useState(0);const[fade,setFade]=useState(true);useEffect(()=>{const t=setInterval(()=>{setFade(false);setTimeout(()=>{setIdx(i=>(i+1)%DEWEY_PHRASES_CONST.length);setFade(true);},220);},1800);return()=>clearInterval(t);},[]);return/*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:10,alignItems:"flex-end"}},/*#__PURE__*/React.createElement("div",{style:{width:30,height:30,borderRadius:"50%",background:"#1E293B",border:"1.5px solid #334155",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,animation:"deweyBob 1.4s ease-in-out infinite"}},/*#__PURE__*/React.createElement(DuckHeadIcon,{size:22,color:"#F8FAFC"})),/*#__PURE__*/React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,padding:"9px 14px",borderRadius:"14px 14px 14px 3px",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",minWidth:200}},/*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:4}},[0,1,2].map(i=>/*#__PURE__*/React.createElement("div",{key:i,style:{width:5,height:5,borderRadius:"50%",background:"#0EA5E9",animation:"deweyDot 1.2s ease-in-out infinite",animationDelay:`${i*0.18}s`}}))),/*#__PURE__*/React.createElement("span",{style:{fontSize:12,fontStyle:"italic",color:"rgba(255,255,255,0.45)",opacity:fade?1:0,transition:"opacity 0.22s ease"}},DEWEY_PHRASES_CONST[idx])));}function buildDeweyOpener(companyId,period){const d=DEWEY_COMPANY_DATA[companyId]||DEWEY_COMPANY_DATA.acme;const l=d.timeHorizon.find(r=>r.period===period)||d.timeHorizon.find(r=>r.period==="L13W");const criticals=d.alerts.filter(a=>a.severity==="critical");const warnings=d.alerts.filter(a=>a.severity==="warning");const topAlert=criticals[0]||warnings[0];const fmtChg=v=>`${v>0?"+":""}${v}`;// Find the dominant story: growth+supply stress, decline, content problem, distribution gap
 const salesDir=l.salesChg>=8?"strong":l.salesChg>=3?"solid":l.salesChg>=0?"flat":"declining";const supplyStress=l.otif<93||l.instock<95||l.isDelta<-0.7||l.otifChg<-2;const contentRisk=l.contentScore<72;const voidRate=(l.traitedStores-l.scanningStores)/l.traitedStores*100;const distGap=voidRate>25;// Build the lead sentence based on the dominant signal
 let lead="";if((salesDir==="strong"||salesDir==="solid")&&supplyStress){lead=`${d.company} is growing hard — sales ${fmtChg(l.salesChg)}% — but the supply chain is the story right now. OTIF is at ${l.otif}% and in-stock is at ${l.instock}%, down ${Math.abs(l.isDelta)}pp. That's $${(l.lostSales/1e3).toFixed(0)}K in lost sales last ${period}.`;}else if(salesDir==="declining"){lead=`${d.company} has a sales problem — ${fmtChg(l.salesChg)}% vs LY with DPSW at $${l.dpsw.toLocaleString()}. Before the buyer asks, we need to know if this is a distribution story or a velocity story.`;}else if(contentRisk){lead=`${d.company}'s numbers look stable on the surface — sales ${fmtChg(l.salesChg)}% — but content score is ${l.contentScore} and ${l.itemsAtRisk} items are below threshold. That's quietly dragging search rank and eComm velocity.`;}else if(distGap){lead=`${d.company} has a distribution opportunity. There are ${(l.traitedStores-l.scanningStores).toLocaleString()} authorized stores not scanning — a ${voidRate.toFixed(0)}% void rate. That's the fastest path to growth if supply chain can support it.`;}else if(salesDir==="solid"){lead=`${d.company} is in decent shape — sales ${fmtChg(l.salesChg)}%, DPSW $${l.dpsw.toLocaleString()}. Supply is holding at ${l.otif}% OTIF. The question is where the next layer of growth comes from.`;}else{lead=`${d.company} — sales ${fmtChg(l.salesChg)}%, OTIF ${l.otif}%, in-stock ${l.instock}%. ${topAlert?topAlert.title:"A few things worth digging into."}`;}// Build suggestions
 const suggestions=[];if(supplyStress)suggestions.push("the OOS root cause — is it supply chain or store execution?");if(l.otifChg<-1.5)suggestions.push(`the OTIF decline — On-Time is at ${l.onTime}% and trending the wrong way`);if(contentRisk)suggestions.push(`content gaps — ${l.itemsAtRisk} items at risk with a score of ${l.contentScore}`);if(distGap)suggestions.push(`the void rate — ${voidRate.toFixed(0)}% of traited stores aren't scanning`);if(warnings.length>0&&warnings[0].domain==="Items")suggestions.push("which items are most exposed and why");// Pick top 2 suggestions
