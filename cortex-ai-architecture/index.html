@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Cortex AI Agent — Architecture & Knowledge Stack</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0f1117;
+  --bg-card:#181c25;
+  --bg-code:#12151e;
+  --border:rgba(255,255,255,0.08);
+  --border-med:rgba(255,255,255,0.14);
+  --text:#e8eaf0;
+  --text-sec:#8b90a0;
+  --text-muted:#555c6e;
+  --blue:#378ADD;
+  --blue-dim:rgba(55,138,221,0.12);
+  --blue-text:#82bef5;
+  --blue-border:rgba(55,138,221,0.25);
+  --green-dim:rgba(59,109,17,0.15);
+  --green-text:#a4d46a;
+  --green-border:rgba(59,109,17,0.35);
+  --amber-dim:rgba(186,117,23,0.12);
+  --amber-text:#f0b84a;
+  --amber-border:rgba(186,117,23,0.35);
+  --purple-dim:rgba(127,119,221,0.12);
+  --purple-text:#b8b4f5;
+  --purple-border:rgba(127,119,221,0.3);
+  --teal-dim:rgba(29,158,117,0.12);
+  --teal-text:#5dcaa5;
+  --teal-border:rgba(29,158,117,0.3);
+  --font:-apple-system,'Helvetica Neue',sans-serif;
+  --font-mono:'SF Mono','Fira Code',monospace;
+  --r:8px;
+  --r-lg:12px;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:15px;line-height:1.7;min-height:100vh;}
+.page{max-width:860px;margin:0 auto;padding:3rem 2rem 6rem;}
+
+/* Header */
+.doc-header{border-bottom:0.5px solid var(--border);padding-bottom:1.5rem;margin-bottom:2.5rem;}
+.doc-title{font-size:26px;font-weight:500;margin-bottom:0.4rem;}
+.doc-meta{display:flex;gap:1.5rem;font-size:12px;color:var(--text-muted);}
+.doc-meta span{display:flex;align-items:center;gap:5px;}
+.status-badge{font-size:11px;padding:2px 8px;border-radius:4px;background:var(--amber-dim);color:var(--amber-text);border:0.5px solid var(--amber-border);}
+
+/* TOC */
+.toc{background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--r-lg);padding:1.25rem 1.5rem;margin-bottom:2.5rem;}
+.toc-title{font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.75rem;}
+.toc ol{padding-left:1.2rem;}
+.toc li{font-size:13px;color:var(--text-sec);margin-bottom:3px;}
+.toc a{color:var(--text-sec);text-decoration:none;}
+.toc a:hover{color:var(--blue-text);}
+.toc .toc-sub{list-style:none;padding-left:1rem;margin-top:3px;}
+.toc .toc-sub li{font-size:12px;color:var(--text-muted);}
+
+/* Sections */
+.section{margin-bottom:3rem;}
+h2{font-size:20px;font-weight:500;margin-bottom:1rem;padding-top:0.5rem;}
+h3{font-size:16px;font-weight:500;margin-bottom:0.75rem;margin-top:1.75rem;color:var(--text);}
+h4{font-size:13px;font-weight:500;margin-bottom:0.5rem;margin-top:1.25rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);}
+p{margin-bottom:1rem;color:var(--text-sec);}
+p strong{color:var(--text);font-weight:500;}
+hr{border:none;border-top:0.5px solid var(--border);margin:2.5rem 0;}
+a{color:var(--blue-text);text-decoration:none;}
+a:hover{text-decoration:underline;}
+
+/* Layer cards */
+.layer-card{border:0.5px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:1.5rem;}
+.layer-header{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:0.5px solid var(--border);}
+.layer-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0;}
+.layer-title{font-size:15px;font-weight:500;}
+.layer-sub{font-size:12px;margin-left:auto;flex-shrink:0;}
+.layer-body{padding:16px 18px;}
+.layer-body p{font-size:13px;margin-bottom:0.6rem;}
+.layer-body p:last-child{margin-bottom:0;}
+.tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.tag{font-size:11px;padding:3px 9px;border-radius:4px;border:0.5px solid;}
+
+.layer-1 .layer-header{background:rgba(136,135,128,0.06);}
+.layer-1 .layer-num{background:rgba(136,135,128,0.15);color:#b4b2a9;}
+.layer-1 .layer-sub{color:#888780;}
+
+.layer-2 .layer-header{background:var(--blue-dim);}
+.layer-2 .layer-num{background:rgba(55,138,221,0.2);color:var(--blue-text);}
+.layer-2 .layer-sub{color:var(--blue-text);}
+.layer-2 .tag{background:var(--blue-dim);color:var(--blue-text);border-color:var(--blue-border);}
+
+.layer-3 .layer-header{background:var(--purple-dim);}
+.layer-3 .layer-num{background:rgba(127,119,221,0.2);color:var(--purple-text);}
+.layer-3 .layer-sub{color:var(--purple-text);}
+.layer-3 .tag{background:var(--purple-dim);color:var(--purple-text);border-color:var(--purple-border);}
+
+.layer-4 .layer-header{background:var(--teal-dim);}
+.layer-4 .layer-num{background:rgba(29,158,117,0.2);color:var(--teal-text);}
+.layer-4 .layer-sub{color:var(--teal-text);}
+.layer-4 .tag{background:var(--teal-dim);color:var(--teal-text);border-color:var(--teal-border);}
+
+.layer-5 .layer-header{background:rgba(136,135,128,0.06);}
+.layer-5 .layer-num{background:rgba(136,135,128,0.12);color:#b4b2a9;}
+.layer-5 .layer-sub{color:#888780;}
+
+/* Diagram container */
+.diagram-wrap{background:var(--bg-card);border:0.5px solid var(--border);border-radius:var(--r-lg);padding:1.5rem;margin:1.5rem 0 2rem;}
+.diagram-caption{font-size:12px;color:var(--text-muted);text-align:center;margin-top:1rem;}
+
+/* SVG diagram colours (dark theme) */
+.d-gray-fill{fill:#1e2330;stroke:rgba(255,255,255,0.1);stroke-width:0.5;}
+.d-blue-fill{fill:rgba(55,138,221,0.1);stroke:rgba(55,138,221,0.3);stroke-width:0.5;}
+.d-purple-fill{fill:rgba(127,119,221,0.1);stroke:rgba(127,119,221,0.3);stroke-width:0.5;}
+.d-teal-fill{fill:rgba(29,158,117,0.1);stroke:rgba(29,158,117,0.3);stroke-width:0.5;}
+.d-gray2-fill{fill:#181c25;stroke:rgba(255,255,255,0.08);stroke-width:0.5;}
+.d-chip{fill:#181c25;stroke:rgba(255,255,255,0.08);stroke-width:0.5;}
+.d-text-primary{fill:#e8eaf0;font-family:-apple-system,'Helvetica Neue',sans-serif;}
+.d-text-sec{fill:#8b90a0;font-family:-apple-system,'Helvetica Neue',sans-serif;}
+.d-text-muted{fill:#555c6e;font-family:-apple-system,'Helvetica Neue',sans-serif;}
+.d-text-blue{fill:#82bef5;font-family:-apple-system,'Helvetica Neue',sans-serif;}
+.d-text-purple{fill:#b8b4f5;font-family:-apple-system,'Helvetica Neue',sans-serif;}
+.d-text-teal{fill:#5dcaa5;font-family:-apple-system,'Helvetica Neue',sans-serif;}
+.d-text-amber{fill:#f0b84a;font-family:-apple-system,'Helvetica Neue',sans-serif;}
+
+/* Code blocks */
+pre{background:var(--bg-code);border:0.5px solid var(--border);border-radius:var(--r);padding:1rem 1.25rem;overflow-x:auto;margin:0.75rem 0 1rem;font-family:var(--font-mono);font-size:12px;line-height:1.7;color:#c8ccd8;}
+code{font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:3px;color:#c8ccd8;}
+pre code{background:none;padding:0;}
+
+/* Callout boxes */
+.callout{border-radius:var(--r);padding:12px 16px;margin:1rem 0;font-size:13px;line-height:1.65;}
+.callout-blue{background:var(--blue-dim);border:0.5px solid var(--blue-border);color:var(--blue-text);}
+.callout-amber{background:var(--amber-dim);border:0.5px solid var(--amber-border);color:var(--amber-text);}
+.callout-green{background:var(--green-dim);border:0.5px solid var(--green-border);color:var(--green-text);}
+.callout strong{font-weight:500;}
+
+/* Tables */
+.table-wrap{overflow-x:auto;margin:1rem 0;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{padding:8px 12px;text-align:left;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);border-bottom:0.5px solid var(--border-med);}
+td{padding:9px 12px;border-bottom:0.5px solid var(--border);color:var(--text-sec);vertical-align:top;}
+td:first-child{color:var(--text);font-weight:500;}
+tr:last-child td{border-bottom:none;}
+
+/* List styles */
+ul,ol{padding-left:1.4rem;margin-bottom:1rem;}
+li{color:var(--text-sec);font-size:14px;margin-bottom:4px;line-height:1.6;}
+li strong{color:var(--text);font-weight:500;}
+
+/* Sub-section pills for Layer 4 */
+.sub-pill{display:inline-block;font-size:11px;padding:2px 9px;border-radius:4px;font-weight:500;margin-bottom:8px;}
+.pill-ev{background:var(--green-dim);color:var(--green-text);border:0.5px solid var(--green-border);}
+.pill-tb{background:var(--blue-dim);color:var(--blue-text);border:0.5px solid var(--blue-border);}
+.pill-past{background:rgba(255,255,255,0.04);color:var(--text-muted);border:0.5px solid var(--border);}
+
+/* Session assembly block */
+.assembly-block{background:var(--bg-code);border:0.5px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin:1rem 0;}
+.assembly-row{display:flex;align-items:stretch;border-bottom:0.5px solid var(--border);}
+.assembly-row:last-child{border-bottom:none;}
+.assembly-num{width:36px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:var(--text-muted);border-right:0.5px solid var(--border);font-family:var(--font-mono);}
+.assembly-content{padding:10px 14px;flex:1;}
+.assembly-label{font-size:12px;font-weight:500;color:var(--text);margin-bottom:4px;}
+.assembly-detail{font-size:12px;color:var(--text-muted);line-height:1.6;}
+.assembly-detail span{display:block;padding-left:12px;position:relative;}
+.assembly-detail span::before{content:'└';position:absolute;left:0;color:var(--text-muted);}
+
+/* Update triage */
+.triage-steps{counter-reset:step;}
+.triage-step{display:flex;gap:14px;margin-bottom:14px;align-items:flex-start;}
+.step-num{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.05);border:0.5px solid var(--border-med);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--text-muted);flex-shrink:0;margin-top:1px;}
+.step-body{font-size:13px;color:var(--text-sec);line-height:1.6;}
+.step-body strong{color:var(--text);}
+</style>
+<style>
+#pw-gate{position:fixed;inset:0;background:var(--bg-page, #0F1520);z-index:9999;display:flex;align-items:center;justify-content:center;}
+#pw-gate.hidden{display:none;}
+#pw-box{background:var(--bg-surface, #16202E);border:1px solid var(--border, #243044);border-radius:12px;padding:32px 40px;text-align:center;max-width:360px;width:90%;}
+#pw-box h2{margin:0 0 8px;font-size:18px;color:var(--text-primary, #E8EDF4);font-weight:700;}
+#pw-box p{margin:0 0 20px;font-size:13px;color:var(--text-dim, #4A6280);}
+#pw-input{width:100%;padding:10px 14px;font-size:14px;border:1px solid var(--border, #243044);border-radius:8px;background:var(--bg-page, #0F1520);color:var(--text-primary, #E8EDF4);outline:none;box-sizing:border-box;}
+#pw-input:focus{border-color:var(--accent, #e07f1c);}
+#pw-input::placeholder{color:var(--text-dim, #4A6280);}
+#pw-btn{margin-top:14px;width:100%;padding:10px;font-size:14px;font-weight:600;background:var(--accent, #e07f1c);color:#fff;border:none;border-radius:8px;cursor:pointer;transition:background .15s;}
+#pw-btn:hover{background:var(--accent-dark, #c96e18);}
+#pw-error{margin-top:12px;font-size:12px;color:var(--red, #EF4444);display:none;}
+#app-content{display:none;}
+#app-content.visible{display:block;}
+</style>
+</head>
+<body>
+<div id="pw-gate">
+  <div id="pw-box">
+    <h2>Cortex AI Architecture</h2>
+    <p>Enter password to continue</p>
+    <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()">
+    <button id="pw-btn" onclick="checkPw()">Enter</button>
+    <div id="pw-error">Incorrect password</div>
+  </div>
+</div>
+<div id="app-content">
+<div class="page">
+
+  <!-- Header -->
+  <div class="doc-header">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <div class="doc-title">Cortex AI Agent — Architecture &amp; Knowledge Stack</div>
+      <span class="status-badge">Draft v1.0</span>
+    </div>
+    <div class="doc-meta">
+      <span>Last updated: April 2026</span>
+      <span>Audience: Engineering, product</span>
+    </div>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title">Contents</div>
+    <ol>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#diagram">Architecture diagram</a></li>
+      <li><a href="#layers">The five layers</a>
+        <ul class="toc-sub">
+          <li><a href="#l1">Layer 1 — Foundation model</a></li>
+          <li><a href="#l2">Layer 2 — Walmart domain knowledge</a></li>
+          <li><a href="#l3">Layer 3 — Platform skills</a></li>
+          <li><a href="#l4">Layer 4 — Brand context (user-managed)</a></li>
+          <li><a href="#l5">Layer 5 — Guardrails &amp; evals</a></li>
+        </ul>
+      </li>
+      <li><a href="#assembly">Session assembly</a></li>
+      <li><a href="#observability">Observability</a></li>
+      <li><a href="#updates">Keeping the agent up to date</a></li>
+      <li><a href="#openq">Decisions</a></li>
+      <li><a href="#storage">Storage, versioning &amp; deployment</a></li>
+      <li><a href="#future">Future considerations</a></li>
+    </ol>
+  </div>
+
+  <!-- Overview -->
+  <div class="section" id="overview">
+    <h2>Overview</h2>
+    <p>Cortex embeds a customer-facing AI agent with significant domain expertise in Walmart supplier analytics. The agent is built on <strong>Claude (Anthropic API)</strong> and derives its intelligence from five layered knowledge sources — not from model fine-tuning. Each layer can be updated independently without retraining or redeploying the model.</p>
+    <p>The architecture is designed so that:</p>
+    <ul>
+      <li><strong>Platform-level knowledge</strong> (Walmart domain, data interpretation) is maintained by the DuitLabs team and versioned like code</li>
+      <li><strong>Brand-specific knowledge</strong> is maintained by the customer and updated in real time via the Brand Settings UI</li>
+      <li><strong>Guardrails and quality controls</strong> wrap the full stack and operate on every request/response cycle</li>
+    </ul>
+    <div class="callout callout-blue">
+      <strong>Key principle:</strong> The model is a commodity. The expertise lives in the prompt layers. A carefully authored system prompt with well-structured domain knowledge outperforms a fine-tuned model in this use case — and can be updated in hours, not weeks.
+    </div>
+  </div>
+
+  <!-- Diagram -->
+  <div class="section" id="diagram">
+    <h2>Architecture diagram</h2>
+    <p>The five layers are nested — each wraps the one inside it. The innermost layer is the foundation model. The outermost is the guardrails ring that monitors every request and response.</p>
+
+    <div class="diagram-wrap">
+      <svg width="100%" viewBox="0 0 680 760" role="img">
+        <title>Cortex AI architecture — five nested layers from foundation model to guardrails</title>
+        <desc>Concentric rectangle layers: Layer 5 Guardrails outermost, then Layer 4 Brand Context (teal), Layer 3 Platform Skills (purple), Layer 2 Walmart Domain Knowledge (blue), Layer 1 Foundation Model (gray) innermost. Each contains labeled sub-components.</desc>
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+        </defs>
+
+        <!-- L5: Guardrails -->
+        <rect x="10" y="10" width="660" height="740" rx="16" class="d-gray-fill"/>
+        <text x="340" y="36" text-anchor="middle" font-size="13" font-weight="500" class="d-text-primary" font-family="-apple-system,'Helvetica Neue',sans-serif">Layer 5 — Guardrails &amp; evals</text>
+        <text x="340" y="52" text-anchor="middle" font-size="11" class="d-text-muted" font-family="-apple-system,'Helvetica Neue',sans-serif">Input/output filters · hallucination checks · domain drift monitoring · eval suite</text>
+
+        <!-- L4: Brand context -->
+        <rect x="30" y="66" width="620" height="614" rx="14" class="d-teal-fill"/>
+        <text x="340" y="90" text-anchor="middle" font-size="13" font-weight="500" class="d-text-teal" font-family="-apple-system,'Helvetica Neue',sans-serif">Layer 4 — Brand context</text>
+        <text x="340" y="106" text-anchor="middle" font-size="11" class="d-text-muted" font-family="-apple-system,'Helvetica Neue',sans-serif">User-managed · injected at session start · overrides platform defaults</text>
+
+        <!-- L3: Platform skills -->
+        <rect x="50" y="120" width="580" height="488" rx="14" class="d-purple-fill"/>
+        <text x="340" y="144" text-anchor="middle" font-size="13" font-weight="500" class="d-text-purple" font-family="-apple-system,'Helvetica Neue',sans-serif">Layer 3 — Platform skills</text>
+        <text x="340" y="160" text-anchor="middle" font-size="11" class="d-text-muted" font-family="-apple-system,'Helvetica Neue',sans-serif">Cortex-managed · versioned · updated without touching the model</text>
+
+        <!-- L2: Walmart domain -->
+        <rect x="70" y="174" width="540" height="362" rx="14" class="d-blue-fill"/>
+        <text x="340" y="198" text-anchor="middle" font-size="13" font-weight="500" class="d-text-blue" font-family="-apple-system,'Helvetica Neue',sans-serif">Layer 2 — Walmart domain knowledge</text>
+        <text x="340" y="214" text-anchor="middle" font-size="11" class="d-text-muted" font-family="-apple-system,'Helvetica Neue',sans-serif">Scintilla metrics · data interpretation · retail math · buyer context · terminology</text>
+
+        <!-- L1: Foundation model -->
+        <rect x="90" y="228" width="500" height="274" rx="12" class="d-gray2-fill"/>
+        <text x="340" y="252" text-anchor="middle" font-size="13" font-weight="500" class="d-text-primary" font-family="-apple-system,'Helvetica Neue',sans-serif">Layer 1 — Foundation model (Claude API)</text>
+        <text x="340" y="268" text-anchor="middle" font-size="11" class="d-text-muted" font-family="-apple-system,'Helvetica Neue',sans-serif">Reasoning, language, code — provided by Anthropic</text>
+
+        <!-- L1 sub-components (2x2 grid) -->
+        <rect x="106" y="282" width="218" height="52" rx="8" class="d-chip"/>
+        <text x="215" y="304" text-anchor="middle" font-size="12" font-weight="500" class="d-text-primary" font-family="-apple-system,'Helvetica Neue',sans-serif">System prompt</text>
+        <text x="215" y="320" text-anchor="middle" font-size="11" class="d-text-muted" font-family="-apple-system,'Helvetica Neue',sans-serif">Static persona + behavioral rules</text>
+
+        <rect x="356" y="282" width="218" height="52" rx="8" class="d-chip"/>
+        <text x="465" y="304" text-anchor="middle" font-size="12" font-weight="500" class="d-text-primary" font-family="-apple-system,'Helvetica Neue',sans-serif">Conversation history</text>
+        <text x="465" y="320" text-anchor="middle" font-size="11" class="d-text-muted" font-family="-apple-system,'Helvetica Neue',sans-serif">Rolling session window</text>
+
+        <rect x="106" y="346" width="218" height="52" rx="8" class="d-chip"/>
+        <text x="215" y="368" text-anchor="middle" font-size="12" font-weight="500" class="d-text-primary" font-family="-apple-system,'Helvetica Neue',sans-serif">Tool calls</text>
+        <text x="215" y="384" text-anchor="middle" font-size="11" class="d-text-muted" font-family="-apple-system,'Helvetica Neue',sans-serif">Data queries · external APIs</text>
+
+        <rect x="356" y="346" width="218" height="52" rx="8" class="d-chip"/>
+        <text x="465" y="368" text-anchor="middle" font-size="12" font-weight="500" class="d-text-primary" font-family="-apple-system,'Helvetica Neue',sans-serif">RAG retrieval</text>
+        <text x="465" y="384" text-anchor="middle" font-size="11" class="d-text-muted" font-family="-apple-system,'Helvetica Neue',sans-serif">Vector search on docs</text>
+
+        <rect x="106" y="410" width="468" height="52" rx="8" class="d-chip"/>
+        <text x="340" y="432" text-anchor="middle" font-size="12" font-weight="500" class="d-text-primary" font-family="-apple-system,'Helvetica Neue',sans-serif">Session context injection</text>
+        <text x="340" y="448" text-anchor="middle" font-size="11" class="d-text-muted" font-family="-apple-system,'Helvetica Neue',sans-serif">Live data snapshot · user role · active brand · access tier</text>
+
+        <!-- L3 skill chips -->
+        <rect x="66" y="530" width="172" height="52" rx="8" class="d-chip"/>
+        <text x="152" y="552" text-anchor="middle" font-size="12" font-weight="500" class="d-text-purple" font-family="-apple-system,'Helvetica Neue',sans-serif">Merchant analyst</text>
+        <text x="152" y="568" text-anchor="middle" font-size="11" class="d-text-muted" font-family="-apple-system,'Helvetica Neue',sans-serif">Retail math, analysis</text>
+
+        <rect x="254" y="530" width="172" height="52" rx="8" class="d-chip"/>
+        <text x="340" y="552" text-anchor="middle" font-size="12" font-weight="500" class="d-text-purple" font-family="-apple-system,'Helvetica Neue',sans-serif">Data analyst</text>
+        <text x="340" y="568" text-anchor="middle" font-size="11" class="d-text-muted" font-family="-apple-system,'Helvetica Neue',sans-serif">Sub-agent · Scintilla queries</text>
+
+        <rect x="442" y="530" width="172" height="52" rx="8" class="d-chip"/>
+        <text x="528" y="552" text-anchor="middle" font-size="12" font-weight="500" class="d-text-purple" font-family="-apple-system,'Helvetica Neue',sans-serif">Communication</text>
+        <text x="528" y="568" text-anchor="middle" font-size="11" class="d-text-muted" font-family="-apple-system,'Helvetica Neue',sans-serif">Email, buyer tone, format</text>
+
+        <!-- L4 brand chips -->
+        <rect x="46" y="598" width="178" height="52" rx="8" class="d-chip"/>
+        <text x="135" y="620" text-anchor="middle" font-size="12" font-weight="500" class="d-text-teal" font-family="-apple-system,'Helvetica Neue',sans-serif">Context notes</text>
+        <text x="135" y="636" text-anchor="middle" font-size="11" class="d-text-muted" font-family="-apple-system,'Helvetica Neue',sans-serif">Evergreen + time-bound facts</text>
+
+        <rect x="251" y="598" width="178" height="52" rx="8" class="d-chip"/>
+        <text x="340" y="620" text-anchor="middle" font-size="12" font-weight="500" class="d-text-teal" font-family="-apple-system,'Helvetica Neue',sans-serif">Playbooks</text>
+        <text x="340" y="636" text-anchor="middle" font-size="11" class="d-text-muted" font-family="-apple-system,'Helvetica Neue',sans-serif">Situational trigger instructions</text>
+
+        <rect x="456" y="598" width="178" height="52" rx="8" class="d-chip"/>
+        <text x="545" y="620" text-anchor="middle" font-size="12" font-weight="500" class="d-text-teal" font-family="-apple-system,'Helvetica Neue',sans-serif">Brand overrides</text>
+        <text x="545" y="636" text-anchor="middle" font-size="11" class="d-text-muted" font-family="-apple-system,'Helvetica Neue',sans-serif">Tone, scope, SKU focus</text>
+
+        <!-- L5 guardrail chips -->
+        <rect x="30" y="666" width="132" height="34" rx="17" class="d-chip"/>
+        <text x="96" y="686" text-anchor="middle" font-size="11" font-weight="500" class="d-text-primary" font-family="-apple-system,'Helvetica Neue',sans-serif">Hallucination check</text>
+
+        <rect x="176" y="666" width="118" height="34" rx="17" class="d-chip"/>
+        <text x="235" y="686" text-anchor="middle" font-size="11" font-weight="500" class="d-text-primary" font-family="-apple-system,'Helvetica Neue',sans-serif">Prompt defense</text>
+
+        <rect x="308" y="666" width="90" height="34" rx="17" class="d-chip"/>
+        <text x="353" y="686" text-anchor="middle" font-size="11" font-weight="500" class="d-text-primary" font-family="-apple-system,'Helvetica Neue',sans-serif">Evals suite</text>
+
+        <rect x="412" y="666" width="116" height="34" rx="17" class="d-chip"/>
+        <text x="470" y="686" text-anchor="middle" font-size="11" font-weight="500" class="d-text-primary" font-family="-apple-system,'Helvetica Neue',sans-serif">Feedback loop</text>
+
+        <rect x="542" y="666" width="114" height="34" rx="17" class="d-chip"/>
+        <text x="599" y="686" text-anchor="middle" font-size="11" font-weight="500" class="d-text-primary" font-family="-apple-system,'Helvetica Neue',sans-serif">Brand isolation</text>
+
+        <text x="340" y="730" text-anchor="middle" font-size="11" class="d-text-muted" font-family="-apple-system,'Helvetica Neue',sans-serif">Each layer updates independently — no model retraining required</text>
+      </svg>
+      <div class="diagram-caption">The five layers of the Cortex AI stack. Inner layers are more stable; outer layers change more frequently. Brand context (Layer 4) is customer-managed.</div>
+    </div>
+  </div>
+
+  <hr/>
+
+  <!-- Five Layers -->
+  <div class="section" id="layers">
+    <h2>The five layers</h2>
+
+    <!-- L1 -->
+    <div class="layer-card layer-1" id="l1">
+      <div class="layer-header">
+        <div class="layer-num">1</div>
+        <div>
+          <div class="layer-title">Foundation model</div>
+        </div>
+        <div class="layer-sub">Claude API · Anthropic</div>
+      </div>
+      <div class="layer-body">
+        <p>The base model provides general reasoning, language understanding, and code capabilities. DuitLabs does not fine-tune the model. All domain expertise is injected through the layers above.</p>
+        <p><strong>What lives here:</strong> system prompt (static persona and behavioral rules), conversation history (rolling window), tool definitions (functions the agent can call to retrieve data), and RAG retrieval for relevant documentation.</p>
+        <p><strong>Update cadence:</strong> Anthropic manages model improvements. DuitLabs controls the system prompt and tool definitions, versioned in source control. <strong>Key decision:</strong> use the API, not a self-hosted model — fine-tuning is reserved as a future lever if the prompt-based approach hits a hard ceiling.</p>
+      </div>
+    </div>
+
+    <!-- L2 -->
+    <div class="layer-card layer-2" id="l2">
+      <div class="layer-header">
+        <div class="layer-num">2</div>
+        <div>
+          <div class="layer-title">Walmart domain knowledge</div>
+        </div>
+        <div class="layer-sub">DuitLabs-managed · versioned</div>
+      </div>
+      <div class="layer-body">
+        <p>The agent's fluency in Walmart data and retail operations. A general-purpose model does not know how to interpret Walmart data (e.g. OTIF, WOS, In-Stock Rate) or what those metrics mean in practice. This layer encodes that expertise explicitly — including how to call and interpret data from the Scintilla API. Note that this layer covers Walmart platform knowledge; brand-specific context (what makes a particular supplier's situation unique) is handled in Layer 4.</p>
+        <div class="tag-row">
+          <span class="tag">Scintilla API (Basic &amp; Charter)</span>
+          <span class="tag">Retail math</span>
+          <span class="tag">Data interpretation rules</span>
+          <span class="tag">Buyer context</span>
+          <span class="tag">Terminology glossary</span>
+        </div>
+        <p><strong>Implementation:</strong> The <code>walmart-merchant-analyst</code> skill — a structured markdown document injected into the system prompt at session start. Maintained by DuitLabs and versioned alongside application code. The skill includes a full glossary of Walmart terminology so the agent uses terms correctly.</p>
+        <p><strong>Note from initial testing:</strong> The model required explicit guidance on how to interpret Walmart data. This is expected — the solution is to encode interpretation rules in plain language in this layer, not to fine-tune the model.</p>
+      </div>
+    </div>
+
+    <!-- L3 -->
+    <div class="layer-card layer-3" id="l3">
+      <div class="layer-header">
+        <div class="layer-num">3</div>
+        <div>
+          <div class="layer-title">Platform skills</div>
+        </div>
+        <div class="layer-sub">Cortex-managed · modular</div>
+      </div>
+      <div class="layer-body">
+        <p>Behavioral capabilities that sit above domain knowledge and shape how the agent reasons, structures its responses, and communicates. These are patterns, not facts.</p>
+        <div class="tag-row">
+          <span class="tag">Merchant analyst</span>
+          <span class="tag">Data analyst</span>
+          <span class="tag">Communication</span>
+          <span class="tag">Response format rules</span>
+        </div>
+        <p>Each skill is a modular markdown document loaded only when relevant — the communication skill loads for message drafting, not for pure data analysis. Updated when customers report quality issues or new use cases emerge. No engineering sprint required.</p>
+        <p><strong>Platform playbooks</strong> are also defined at this layer — default behaviors for common situations that apply to all brands unless overridden. For example, a platform executive summary playbook might produce a bulleted response covering the current week compared to the prior year. A brand can override this with their own version at Layer 4. The brand playbook always takes precedence.</p>
+
+        <h4>Sub-agent orchestration</h4>
+        <p>Some tasks require specialized work that is cleanly separated from the customer-facing response. Cortex handles this through sub-agents — purpose-built agents that the primary agent can invoke, wait on, and incorporate without the customer ever knowing a handoff occurred.</p>
+        <p><strong>The pattern:</strong> the <code>walmart-merchant-analyst</code> is always the primary agent and the only voice to the customer. When it needs data it cannot reason about on its own — raw Scintilla queries, aggregations, period-over-period calculations — it invokes the <code>walmart-data-analyst</code> as a sub-agent via a tool call. The data analyst runs its analysis and returns structured results. The merchant analyst then synthesizes those results into a response and replies to the customer. The customer sees one coherent answer, with no visibility into the internal handoff.</p>
+
+        <div class="assembly-block" style="margin:1rem 0;">
+          <div class="assembly-row">
+            <div class="assembly-num">1</div>
+            <div class="assembly-content">
+              <div class="assembly-label">Customer message</div>
+              <div class="assembly-detail"><span>Received by the merchant analyst</span></div>
+            </div>
+          </div>
+          <div class="assembly-row">
+            <div class="assembly-num">2</div>
+            <div class="assembly-content">
+              <div class="assembly-label">Merchant analyst decides it needs data</div>
+              <div class="assembly-detail"><span>Invokes the data analyst as a tool call, passing the specific data question</span></div>
+            </div>
+          </div>
+          <div class="assembly-row">
+            <div class="assembly-num">3</div>
+            <div class="assembly-content">
+              <div class="assembly-label">Data analyst runs</div>
+              <div class="assembly-detail"><span>Queries Scintilla, runs calculations, returns structured results to the merchant analyst</span></div>
+            </div>
+          </div>
+          <div class="assembly-row">
+            <div class="assembly-num">4</div>
+            <div class="assembly-content">
+              <div class="assembly-label">Merchant analyst synthesizes and responds</div>
+              <div class="assembly-detail"><span>Incorporates data analyst output into a single coherent reply — one voice to the customer throughout</span></div>
+            </div>
+          </div>
+        </div>
+
+        <p><strong>Why this separation matters:</strong> data retrieval and analysis is a distinct skill from commercial interpretation and communication. Keeping them as separate agents means each can be updated, tested, and improved independently. The merchant analyst's skill document never needs to describe how to run a query — it only needs to know how to interpret and communicate the result. This also makes the system easier to debug: if the answer is wrong, you can quickly identify whether the failure was in data retrieval (data analyst) or in interpretation and framing (merchant analyst).</p>
+        <p><strong>Additional sub-agents (future):</strong> the same pattern can be extended to other specialized tasks — a document drafting agent for generating formatted buyer presentations, or a forecasting agent for scenario modeling. Each plugs in as a tool call to the merchant analyst and returns its output invisibly to the customer.</p>
+      </div>
+    </div>
+
+    <!-- L4 -->
+    <div class="layer-card layer-4" id="l4">
+      <div class="layer-header">
+        <div class="layer-num">4</div>
+        <div>
+          <div class="layer-title">Brand context</div>
+        </div>
+        <div class="layer-sub">Customer-managed · real-time</div>
+      </div>
+      <div class="layer-body">
+        <p>The brand-specific layer. This is what makes the agent feel like it knows the customer's brand — not generic Walmart expertise, but expertise applied to Widget Inc. specifically. Managed through the Brand Settings UI and injected on top of everything else at session start.</p>
+
+        <h4>4a — Context notes</h4>
+        <p>Persistent facts about the brand carried as background knowledge in every session.</p>
+        <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+          <span class="sub-pill pill-ev">Evergreen</span>
+          <span class="sub-pill pill-tb">Time-bound</span>
+          <span class="sub-pill pill-past">Past</span>
+        </div>
+        <ul style="margin-bottom:12px;">
+          <li><strong>Evergreen</strong> — stable facts with no expiry: buyer preferences, inventory posture, competitive context</li>
+          <li><strong>Time-bound</strong> — active for a defined period, then archived: current promo, seasonal program, event window</li>
+          <li><strong>Past</strong> — notes from prior periods, injected alongside active notes but labeled as historical context. The agent uses them for period-over-period analysis — understanding a tough comp, a one-time event, or a prior promo — without treating them as current facts. Default window: last 24 months.</li>
+        </ul>
+        <p>Notes older than a configurable threshold (default: 6 months) are flagged in the UI. The agent is instructed to treat stale notes with lower confidence and surface when a note may be outdated.</p>
+        <p><strong>Injection format (at session start):</strong></p>
+        <pre>## Brand context — Widget Inc.
+Broker: Broker ABC | Categories: Snacks, Beverages | Departments: Grocery, GM
+Buyers: Jake Morrison, Sarah Chen | Distribution: DSD, Warehouse
+
+### Active context notes
+[Evergreen] Buyer preferences — Jake Morrison
+Jake prefers unit volume data, not dollar sales. Always lead with in-stock
+rate before discussing velocity. Prefers concise emails with bullet takeaways.
+Source: J. Smith · Broker ABC · Apr 2, 2025
+
+[Time-bound | Active until May 31, 2026] Spring promo 2026 — rollback plan
+15% rollback on SKU 0042 and 0043 from March 15 through May 31, 2026.
+EDLP-tied, no secondary display. No circular support this cycle.
+Source: M. Davis · Widget Inc. · Feb 28, 2026
+
+### Historical context notes (last 24 months)
+[Past | Ended Nov 2024] TikTok viral event — BurstPop SKU
+BurstPop went viral on TikTok in October 2024, driving a 6x velocity spike over
+3 weeks. Walmart OOS'd within 4 days. Treat Q4 2024 velocity as an anomaly when
+comparing to current or future periods.
+Source: J. Smith · Broker ABC · Nov 3, 2024</pre>
+
+        <h4>4b — Brand playbooks</h4>
+        <p>Brand-specific playbooks that override the platform defaults defined in Layer 3. When a brand has a playbook for a given situation, it always takes precedence over the platform version. If no brand playbook exists for a trigger, the platform playbook runs as the default.</p>
+        <p><strong>Trigger detection</strong> uses the model's own language understanding — no separate classifier required. The agent checks brand playbooks first, then falls back to platform playbooks if no brand override matches.</p>
+
+        <div class="callout callout-blue">
+          <strong>Example:</strong> The platform executive summary playbook produces a bulleted response covering the current week compared to the prior year. A brand that prefers prose and a monthly cadence creates their own executive summary playbook with those instructions. From that point on, the brand's version runs instead of the platform default — same trigger, different output.
+        </div>
+
+        <div class="table-wrap" style="margin-top:1rem;">
+          <table>
+            <thead>
+              <tr><th>Scenario</th><th>What runs</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Brand has a playbook matching the trigger</td>
+                <td>Brand playbook runs. Platform playbook is ignored.</td>
+              </tr>
+              <tr>
+                <td>Brand has no playbook for this trigger</td>
+                <td>Platform playbook runs as the default.</td>
+              </tr>
+              <tr>
+                <td>No playbook at either level matches</td>
+                <td>Agent responds using general domain knowledge and skills — no playbook active.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p><strong>Injection format — brand override active:</strong></p>
+        <pre>### Active playbook: Executive summary (brand override)
+[Brand: Widget Inc. overrides platform default]
+The user has requested an executive summary. Apply Widget Inc.'s format:
+- Write in prose, not bullets
+- Frame as a monthly update, not a weekly snapshot
+- Lead with the top commercial story, followed by in-stock and velocity context
+- Close with one recommended action for the coming month</pre>
+
+        <p><strong>Injection format — platform default active:</strong></p>
+        <pre>### Active playbook: Executive summary (platform default)
+The user has requested an executive summary. Apply the standard format:
+- Bulleted summary, ≤5 points
+- Focus on current week vs. same week prior year
+- Always include a recommended action</pre>
+      </div>
+    </div>
+
+    <!-- L5 -->
+    <div class="layer-card layer-5" id="l5">
+      <div class="layer-header">
+        <div class="layer-num">5</div>
+        <div>
+          <div class="layer-title">Guardrails &amp; evals</div>
+        </div>
+        <div class="layer-sub">Wraps every request</div>
+      </div>
+      <div class="layer-body">
+        <h4>Input guardrails</h4>
+        <ul>
+          <li><strong>Scope enforcement</strong> — reject or redirect questions outside the Walmart supplier context</li>
+          <li><strong>Single-brand isolation</strong> — never surface data or context from another brand in the session</li>
+          <li><strong>Prompt injection defense</strong> — detect and block attempts to override system instructions</li>
+          <li><strong>PII handling</strong> — strip or flag sensitive personal data before it reaches the model</li>
+        </ul>
+        <h4>Output guardrails</h4>
+        <ul>
+          <li><strong>Data grounding check</strong> — numerical claims must be supported by the injected session data; the agent must never fabricate metric values</li>
+          <li><strong>Confidence signaling</strong> — stale context notes or ambiguous data trigger uncertainty surfacing, not false confidence</li>
+          <li><strong>Citation linking</strong> — responses surface which brand context notes influenced them. Playbooks and platform skills are not cited in the UI since they are not visible to brand or broker users.</li>
+        </ul>
+        <h4>Evals suite</h4>
+        <p>A battery of test prompts with expected outputs, run before any change to layers 2 or 3 ships. Each eval is a JSON object with <code>prompt</code>, <code>injected_context</code>, <code>expected_behavior</code>, and <code>failure_modes</code>.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Eval category</th><th>What it checks</th></tr></thead>
+            <tbody>
+              <tr><td>Data interpretation</td><td>Correctly reads velocity, in-stock rate, and OTIF from a given snapshot</td></tr>
+              <tr><td>Retail math</td><td>Calculates maintained margin, WOS, and GMROII correctly</td></tr>
+              <tr><td>Playbook triggering</td><td>Buyer meeting playbook fires correctly; stays dormant when trigger is absent</td></tr>
+              <tr><td>Context note injection</td><td>Applies brand's buyer preferences when drafting a buyer email</td></tr>
+              <tr><td>Scope enforcement</td><td>Correctly declines competitor brands or non-Walmart data</td></tr>
+              <tr><td>Staleness handling</td><td>Flags stale context note rather than asserting its contents as current fact</td></tr>
+              <tr><td>Tone and format</td><td>Response matches platform communication standard: concise, action-oriented, Walmart-fluent</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr/>
+
+  <!-- Session Assembly -->
+  <div class="section" id="assembly">
+    <h2>Session assembly — how the context is built</h2>
+    <p>At the start of every Cortex session, the following is assembled and injected into the model context in order. Playbook detection is the exception — it runs per turn, not at session start.</p>
+
+    <div class="assembly-block">
+      <div class="assembly-row">
+        <div class="assembly-num">1</div>
+        <div class="assembly-content">
+          <div class="assembly-label">System prompt <span style="font-size:11px;color:var(--text-muted);font-weight:400;margin-left:6px;">static, per deployment</span></div>
+          <div class="assembly-detail">
+            <span>Persona, behavioral rules, response format defaults</span>
+            <span>Walmart domain knowledge (Layer 2)</span>
+            <span>Platform skills (Layer 3) — full set or scoped to session type</span>
+          </div>
+        </div>
+      </div>
+      <div class="assembly-row">
+        <div class="assembly-num">2</div>
+        <div class="assembly-content">
+          <div class="assembly-label">Session context injection <span style="font-size:11px;color:var(--text-muted);font-weight:400;margin-left:6px;">dynamic, per session</span></div>
+          <div class="assembly-detail">
+            <span>User role and Scintilla access tier (Basic / Charter)</span>
+            <span>Active brand name, broker, categories, buyers, distribution</span>
+            <span>Live data snapshot — current week's metrics from PostgreSQL</span>
+            <span>Brand context notes — evergreen + active time-bound (Layer 4a)</span>
+          </div>
+        </div>
+      </div>
+      <div class="assembly-row">
+        <div class="assembly-num">3</div>
+        <div class="assembly-content">
+          <div class="assembly-label">Conversation history <span style="font-size:11px;color:var(--text-muted);font-weight:400;margin-left:6px;">rolling window</span></div>
+          <div class="assembly-detail">
+            <span>Last N turns of the current session (typically 20–30 turns)</span>
+          </div>
+        </div>
+      </div>
+      <div class="assembly-row">
+        <div class="assembly-num">4</div>
+        <div class="assembly-content">
+          <div class="assembly-label">User message + playbook check <span style="font-size:11px;color:var(--text-muted);font-weight:400;margin-left:6px;">per turn</span></div>
+          <div class="assembly-detail">
+            <span>Playbook trigger detection runs against the user's message</span>
+            <span>Matching playbook(s) prepended to user message context (Layer 4b)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout-blue" style="margin-top:1rem;">
+      <strong>Token budget:</strong> At Charter tier with a full context note library, injected context is estimated at 3,000–6,000 tokens before conversation history. Claude's 200K context window provides ample headroom. Context notes are short by nature — capacity and cost are not a concern at the scale of typical brand usage.
+    </div>
+  </div>
+
+
+  <!-- Observability -->
+  <div class="section" id="observability">
+    <h2>Observability</h2>
+    <p>Observability is what makes the rest of the system improvable. Without it there is no reliable way to know what users are actually asking, whether the agent is performing well, or which parts of the knowledge stack are doing useful work. Three distinct areas need to be tracked.</p>
+
+    <h3>Usage and behavior</h3>
+    <p>The foundation layer of observability — understanding how the product is being used in practice. Every session and turn should be logged with enough context to answer basic operational questions without having to dig through raw model output.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Signal</th><th>What it tells you</th></tr></thead>
+        <tbody>
+          <tr><td>Questions asked per brand per session</td><td>Which brands are most active; whether usage is concentrated in a few heavy users or distributed broadly</td></tr>
+          <tr><td>Query topic distribution</td><td>What users are actually asking — buyer meeting prep, in-stock analysis, promo performance, etc. Drives roadmap priorities and skill investment</td></tr>
+          <tr><td>Playbook trigger frequency</td><td>Which playbooks are firing most often; which are never triggered and may need their trigger condition revised or removed</td></tr>
+          <tr><td>Context notes cited per session</td><td>Which notes are actively influencing responses vs. sitting idle. Notes that are never cited across many sessions are candidates for review or removal</td></tr>
+          <tr><td>Sub-agent call rate</td><td>How often the merchant analyst is invoking the data analyst; whether certain query types consistently require a data sub-call</td></tr>
+          <tr><td>Token usage per session per brand</td><td>Cost visibility and the primary input for setting and calibrating token cap thresholds</td></tr>
+          <tr><td>Session length and turn count</td><td>Whether users are getting answers quickly or requiring multiple follow-ups — a proxy for response quality</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Response quality</h3>
+    <p>Usage data tells you what is being asked. Quality signals tell you whether the answers are actually good. These are harder to collect automatically — quality requires judgment — so the approach combines explicit user feedback, implicit behavioral signals, and periodic human review.</p>
+
+    <h4>Explicit feedback</h4>
+    <p>A thumbs up / thumbs down on each agent response, surfaced inline in the chat. Low friction for the user — one click. This is the primary quality signal and the most actionable: a thumbs down with an optional free-text comment is enough to triage whether the failure was in data retrieval, interpretation, or communication format.</p>
+    <div class="callout callout-blue">
+      A simple rating is more valuable than it sounds. Over time, the pattern of thumbs-down responses reveals systematic gaps in the knowledge stack — if buyer meeting prep responses consistently get poor ratings, that points directly to the buyer meeting playbook needing work.
+    </div>
+
+    <h4>Implicit signals</h4>
+    <p>Behavioral patterns that suggest a response was insufficient without the user explicitly saying so:</p>
+    <ul>
+      <li><strong>Immediate rephrasing</strong> — the user asks the same question a different way in the next turn, suggesting the first answer didn't land</li>
+      <li><strong>Short session after a complex query</strong> — user asked a substantive question and then left; may indicate dissatisfaction or confusion</li>
+      <li><strong>Follow-up clarification requests</strong> — "what do you mean by..." or "can you explain..." after a response</li>
+    </ul>
+
+    <h4>Human review</h4>
+    <p>A weekly sample of sessions — ideally 10–20 across different brands and query types — reviewed by a DuitLabs team member against a simple rubric: was the data correct, was the interpretation sound, was the format appropriate? This is the highest-signal quality check and the one most likely to catch subtle failures that user ratings miss. Review sessions should be logged and any failures triaged immediately through the update process.</p>
+
+    <h3>System health</h3>
+    <p>Standard infrastructure monitoring, but worth calling out explicitly because some metrics have business implications beyond uptime:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Metric</th><th>Why it matters</th></tr></thead>
+        <tbody>
+          <tr><td>Response latency (p50, p95)</td><td>User experience — sessions with sub-agent calls will be slower; monitor to know when latency becomes a UX problem</td></tr>
+          <tr><td>Error rate by type</td><td>Distinguish model errors (unexpected output format, refusals) from infrastructure errors (API timeouts, data pipeline failures)</td></tr>
+          <tr><td>Token usage by brand (daily/monthly)</td><td>Primary input for token cap management and billing reconciliation</td></tr>
+          <tr><td>Brands approaching token cap</td><td>Trigger for soft cap warning in the admin UI; early signal for brands that may need their cap reviewed</td></tr>
+          <tr><td>Sub-agent failure rate</td><td>If the data analyst sub-agent is failing or timing out at a meaningful rate, the merchant analyst will return incomplete answers — often without the user understanding why</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>The feedback loop</h3>
+    <p>Observability is only valuable if it feeds back into the system. The goal is a closed loop where signals from real usage continuously improve the knowledge stack:</p>
+
+    <div class="assembly-block" style="margin:1rem 0;">
+      <div class="assembly-row">
+        <div class="assembly-num">1</div>
+        <div class="assembly-content">
+          <div class="assembly-label">Signal captured</div>
+          <div class="assembly-detail"><span>Thumbs down rating, implicit behavioral signal, or human review flags a poor response</span></div>
+        </div>
+      </div>
+      <div class="assembly-row">
+        <div class="assembly-num">2</div>
+        <div class="assembly-content">
+          <div class="assembly-label">Triage to layer</div>
+          <div class="assembly-detail"><span>Wrong data → data analyst sub-agent or Scintilla integration</span><span>Wrong interpretation → Layer 2 domain knowledge or Layer 3 skill</span><span>Wrong format or tone → platform or brand playbook</span><span>Missing brand context → Layer 4 context note gap</span></div>
+        </div>
+      </div>
+      <div class="assembly-row">
+        <div class="assembly-num">3</div>
+        <div class="assembly-content">
+          <div class="assembly-label">Fix and add eval</div>
+          <div class="assembly-detail"><span>Edit the relevant skill document; add an eval test case that would have caught the failure</span></div>
+        </div>
+      </div>
+      <div class="assembly-row">
+        <div class="assembly-num">4</div>
+        <div class="assembly-content">
+          <div class="assembly-label">Deploy and monitor</div>
+          <div class="assembly-detail"><span>Run eval suite, merge, redeploy; watch for recurrence of the same failure pattern</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout callout-green">
+      The feedback loop is the compounding advantage. Every failure caught and fixed makes the system permanently smarter. A team that runs this loop well will outperform a team with a better initial model but no improvement process.
+    </div>
+  </div>
+
+  <hr/>
+  <!-- Updates -->
+  <div class="section" id="updates">
+    <h2>Keeping the agent up to date</h2>
+    <p>Observability surfaces the failures. This section describes how to fix them. The goal is a process where an issue caught through ratings, human review, or a customer report can be triaged, fixed, and deployed the same day — without engineering involvement for most cases.</p>
+
+    <h3>When the agent gets something wrong</h3>
+    <div class="triage-steps">
+      <div class="triage-step">
+        <div class="step-num">1</div>
+        <div class="step-body"><strong>Triage to the layer</strong> — wrong data interpretation → Layer 2; wrong tone or format → Layer 3; didn't apply brand context → Layer 4 injection bug; fabricated a number → Layer 5 guardrail gap</div>
+      </div>
+      <div class="triage-step">
+        <div class="step-num">2</div>
+        <div class="step-body"><strong>Edit the skill document</strong> — add the missing rule or clarify the ambiguous one. For Layer 4 failures, check the injection format and session assembly order.</div>
+      </div>
+      <div class="triage-step">
+        <div class="step-num">3</div>
+        <div class="step-body"><strong>Add an eval test case</strong> — write the test that would have caught this failure before it reached a customer.</div>
+      </div>
+      <div class="triage-step">
+        <div class="step-num">4</div>
+        <div class="step-body"><strong>Run the eval suite</strong> — confirm the fix works and doesn't break existing behavior.</div>
+      </div>
+      <div class="triage-step">
+        <div class="step-num">5</div>
+        <div class="step-body"><strong>Merge and redeploy</strong> — skill document changes deploy as part of normal application deployment.</div>
+      </div>
+    </div>
+
+    <div class="callout callout-green" style="margin-top:0.5rem;">
+      Most customer-reported issues are Layer 2 or Layer 3 failures — domain knowledge gaps or communication style mismatches. These can be fixed with a skill document edit. No engineering sprint required.
+    </div>
+
+    <h3>Model upgrades</h3>
+    <p>When Anthropic releases a new model version, run the full eval suite against the new version before switching. Model upgrades occasionally shift behavior in subtle ways that require skill document adjustments — the eval suite is the safety net.</p>
+  </div>
+
+  <hr/>
+
+  <!-- Open questions -->
+  <div class="section" id="openq">
+    <h2>Decisions</h2>
+
+    <h3 style="margin-top:0;">Decided</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Question</th><th>Decision</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Who can create/edit context notes?</td>
+            <td><span style="color:var(--green-text);font-weight:500;">Any user with brand access</span></td>
+            <td>No special role required. Anyone who can view a brand's workspace can add or edit context notes. This keeps the knowledge base easy to maintain — brokers and brand-side users both contribute.</td>
+          </tr>
+          <tr>
+            <td>Who can create/edit playbooks?</td>
+            <td><span style="color:var(--green-text);font-weight:500;">Two levels — different access for each</span></td>
+            <td><strong>Platform playbooks</strong> (Layer 3, in the walmart-merchant-analyst skill) are authored by DuitLabs only. These are the defaults for all brands and are versioned alongside application code. <strong>Brand playbooks</strong> (Layer 4) override platform defaults for a specific brand. In v1 these are created by DuitLabs on behalf of the brand. Self-service brand playbook editing can be opened up in a future release once the format and guardrails are proven. Brand playbook always takes precedence over the platform default when both exist for the same trigger.</td>
+          </tr>
+          <tr>
+            <td>Agent citation</td>
+            <td><span style="color:var(--green-text);font-weight:500;">Context notes only — always on</span></td>
+            <td>When the agent uses a brand's context notes in a response, it surfaces which notes it drew on. This is shown to the user so they can recognize their own notes and act if something is outdated. Playbooks and platform skills are not cited — they are not visible to brand or broker users, so surfacing them would create confusion about something they cannot see or edit.</td>
+          </tr>
+          <tr>
+            <td>Past notes in context</td>
+            <td><span style="color:var(--green-text);font-weight:500;">Always inject — labeled as historical context</span></td>
+            <td>Past notes are injected into every session alongside active notes, but clearly labeled as historical so the agent treats them as prior-period facts rather than current state. This is essential for period-over-period analysis — without past notes, the agent cannot distinguish genuine performance decline from a tough comp against a one-time event (e.g. a viral social media spike last year). Recommended time horizon: inject past notes from the last 24 months; notes older than that are archived and not injected by default. This window can be revisited once usage patterns are understood.</td>
+          </tr>
+          <tr>
+            <td>File attachments on notes</td>
+            <td><span style="color:var(--green-text);font-weight:500;">Not supported in v1</span></td>
+            <td>Context notes are text only. Users paste content directly into the note body. File upload (PDFs, spreadsheets, etc.) is not supported in the initial release. This keeps the implementation simple and produces cleaner agent input — pasted text is more reliable than extracted file content. Can be revisited in a future release if users need it.</td>
+          </tr>
+          <tr>
+            <td>Playbook trigger detection</td>
+            <td><span style="color:var(--green-text);font-weight:500;">Model-native</span></td>
+            <td>The LLM reads each playbook's trigger text and decides whether it applies to the current user message. Triggers are plain English — no training data, no separate deployment. A dedicated classifier would be faster but is a premature optimization with no evidence of a latency problem. Revisit only if response time becomes an issue at scale.</td>
+          </tr>
+          <tr>
+            <td>Token usage cap</td>
+            <td><span style="color:var(--green-text);font-weight:500;">Soft cap per brand, per billing period — with hard shutoff available</span></td>
+            <td>Billing is per brand, not per seat. Cap is set at a high threshold initially to observe real usage patterns before tightening. Billing period is monthly or quarterly — never weekly. A soft cap (warning surfaced in the admin UI when approaching the limit) is the default. A hard shutoff is available for cases where a brand is significantly over, triggerable manually by DuitLabs or automatically at a defined ceiling above the soft cap. <strong>Burst protection:</strong> a secondary daily or rolling 7-day sub-limit prevents a brand from consuming their full monthly allocation in the first few days of a period. Exact thresholds TBD once baseline usage data is available.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- Storage and versioning -->
+  <div class="section" id="storage">
+    <h2>Storage, versioning, and deployment</h2>
+    <p>Skills and playbooks are different types of content that are stored, updated, and deployed differently. Understanding the distinction matters for how engineering builds the data model and deployment pipeline.</p>
+
+    <h3>Platform skills</h3>
+    <p>A platform skill is a single markdown document that contains everything for that skill — persona, rules, interpretation guidance, glossary, and embedded platform playbooks. There is no concept of adding an individual piece in isolation. When anything changes, the whole document is updated and redeployed as one unit.</p>
+    <div class="assembly-block" style="margin:1rem 0;">
+      <div class="assembly-row">
+        <div class="assembly-num">1</div>
+        <div class="assembly-content">
+          <div class="assembly-label">Edit the skill file</div>
+          <div class="assembly-detail"><span>Add the new rule, update the playbook, clarify the interpretation guidance — directly in the markdown document</span></div>
+        </div>
+      </div>
+      <div class="assembly-row">
+        <div class="assembly-num">2</div>
+        <div class="assembly-content">
+          <div class="assembly-label">Review and version</div>
+          <div class="assembly-detail"><span>Change is committed to source control — full history, diff view, rollback available at any time</span></div>
+        </div>
+      </div>
+      <div class="assembly-row">
+        <div class="assembly-num">3</div>
+        <div class="assembly-content">
+          <div class="assembly-label">Run eval suite</div>
+          <div class="assembly-detail"><span>Automated tests confirm the change works as intended and hasn't broken existing behavior</span></div>
+        </div>
+      </div>
+      <div class="assembly-row">
+        <div class="assembly-num">4</div>
+        <div class="assembly-content">
+          <div class="assembly-label">Deploy</div>
+          <div class="assembly-detail"><span>Skill file ships as part of normal application deployment — no model retraining, no separate pipeline</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="callout callout-blue">
+      Adding a new platform playbook means editing the skill document and adding the playbook block in the right section. Adding a new data interpretation rule is the same — edit, commit, eval, deploy. The entire skill is always deployed as a unit, so there is no risk of a partial update where some rules are live and others aren't.
+    </div>
+
+    <h3>Brand playbooks</h3>
+    <p>Brand playbooks are stored in the database as records attached to a brand, not in source-controlled files. Each playbook is a discrete record with a title, trigger, instructions, and type. Adding or editing a brand playbook does not touch the platform skill at all — it is closer to editing a context note than deploying a code change.</p>
+    <div class="table-wrap" style="margin:1rem 0;">
+      <table>
+        <thead><tr><th></th><th>Platform skills</th><th>Brand playbooks</th></tr></thead>
+        <tbody>
+          <tr><td>Stored in</td><td>Source-controlled markdown files</td><td>Database, per brand</td></tr>
+          <tr><td>Updated by</td><td>DuitLabs (code change + deploy)</td><td>DuitLabs in v1; brand self-service in future</td></tr>
+          <tr><td>Update process</td><td>Edit file → eval suite → deploy</td><td>Edit record → active immediately</td></tr>
+          <tr><td>Versioning</td><td>Git history — full diff and rollback</td><td>Database audit log — who changed what and when</td></tr>
+          <tr><td>Scope</td><td>All brands</td><td>One brand only</td></tr>
+          <tr><td>Injected at</td><td>System prompt (session start)</td><td>Session start alongside context notes</td></tr>
+          <tr><td>Override behavior</td><td>Default — runs if no brand override exists</td><td>Always takes precedence over platform default</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout callout-amber">
+      <strong>Important for engineering:</strong> because brand playbooks are live immediately on save, there is no eval gate between an edit and production. This is fine in v1 when DuitLabs authors all brand playbooks. When self-service is opened up to brands, consider a lightweight review step or a preview mode so brands can test a playbook before it goes live.
+    </div>
+
+    <h3>Context notes</h3>
+    <p>Context notes follow the same model as brand playbooks — stored in the database per brand, live immediately on save, no deployment step. The difference is that context notes are facts, not instructions. Any user with brand access can add or edit them. The database should maintain an audit log of who added or changed a note and when, both for accountability and to support the "confirm still accurate" staleness prompt in the UI.</p>
+
+    <h3>Summary</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Content type</th><th>Storage</th><th>Deployment</th><th>Takes effect</th></tr></thead>
+        <tbody>
+          <tr><td>Platform skill (+ platform playbooks)</td><td>Source control</td><td>Application deploy</td><td>Next session after deploy</td></tr>
+          <tr><td>Brand playbook</td><td>Database</td><td>No deploy needed</td><td>Immediately on save</td></tr>
+          <tr><td>Brand context note</td><td>Database</td><td>No deploy needed</td><td>Immediately on save</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <hr/>
+
+  <!-- Future -->
+  <div class="section" id="future">
+    <h2>Future considerations</h2>
+    <p><strong>Fine-tuning (not recommended for v1).</strong> If the prompt-based approach hits a hard ceiling on domain expertise, fine-tuning on a curated dataset of high-quality Cortex responses is the next lever. This should not be pursued until the prompt layers are fully built out and evaluated — the ceiling is likely higher than expected.</p>
+    <p><strong>Retrieval-augmented generation (RAG).</strong> For brands with large context note libraries or attached documents, RAG enables the agent to retrieve only the most relevant context per turn rather than injecting everything at session start. Relevant when the context note library exceeds ~20–30 entries per brand.</p>
+  </div>
+
+</div>
+</div>
+<script>
+(function(){
+  var PW='duitlabs';
+  if(sessionStorage.getItem('demo_auth')==='1'){
+    document.getElementById('pw-gate').classList.add('hidden');
+    document.getElementById('app-content').classList.add('visible');
+  }
+  window.checkPw=function(){
+    var input=document.getElementById('pw-input');
+    if(input.value===PW){
+      sessionStorage.setItem('demo_auth','1');
+      document.getElementById('pw-gate').classList.add('hidden');
+      document.getElementById('app-content').classList.add('visible');
+    }else{
+      document.getElementById('pw-error').style.display='block';
+      input.value='';
+      input.focus();
+    }
+  };
+  document.getElementById('pw-input').focus();
+})();
+</script>
+</body>
+</html>
